@@ -1,48 +1,55 @@
 <?php
 //TODO
 //test data aggregation
-//test oauth2
+
+/*
+ * Run this script for General Key Based Testing
+ * (assumes newly initilized database)
+ */
 
 require_once('wotkit_client.php');
+require_once('wotkit_clientConfig.php');
 
-//"http://pincushion.magic.ubc.ca:8080/api/";
-$wotkit_client = new wotkit_client("http://localhost:8080/api/");
+//SERVER & AUTHENTICATION
+	$wotkit_client = new wotkit_client(BASE_URL, CLIENT_ID, CLIENT_SECRET);
 
-//LIST OF SENSOR NAMES 
-//sensor ids or names can be used for updating sensor or sensor data
-$generic_sensor = "api-client-test-sensor"; //non-existent
-$existing_data_sensor = 
-array("api-data-test-1","api-data-test-2","api-data-test-3"); //pre-existing 40-42
-//id=40 - has pre-supplied data
-//id=41 - is an 'actuator'
-//id=42 - has data added and then deleted
-$unowned_sensor = "sensetecnic.mule1"; //id=1
-$private_unowned_sensor = "sensetecnic.api-test-private"; //id=43
+//---------------------------------------------------------------------------------------//
+/*Set Variables*/
+//SENSOR NAMES 
+	//-sensor ids or names can be used for updating sensor or sensor data
+	$generic_sensor = "api-client-test-sensor"; //non-existent
+	$existing_data_sensor = 
+		array("api-data-test-1","api-data-test-2","api-data-test-3"); //pre-existing 40-42
+	//id=40 - has pre-supplied data
+	//id=41 - is an 'actuator'
+	//id=42 - has data added and then deleted
+	$unowned_sensor = "sensetecnic.mule1"; //id=1
+	$private_unowned_sensor = "sensetecnic.api-test-private"; //id=43
 	
 //SENSOR INPUTS	
-//currently able to update sensor name
-//no error when trying to update owner	
-$new_sensor_input = array(
+	//-currently able to update sensor name
+	//-no error when trying to update owner	
+	$new_sensor_input = array(
 	"private"=>"false", 
 	"name"=>$generic_sensor, 
 	"description"=>"api client test sensor desc", 
 	"longName"=>"api client test sensor long", 
 	"latitude"=>4, 
 	"longitude"=>6,
-	"tags"=>["testing the tags","t e s t i n g ","tags"]);
+	"tags"=>array("testing the tags","t e s t i n g ","tags"));
 
-$updated_sensor_input_1 = array(
+	$updated_sensor_input_1 = array(
 	 "name"=>$generic_sensor, 
 	 "longName"=>"api client test sensor long updated", 
 	 "description"=>"api client test sensor desc updated",
 	 "latitude"=>55,
 	 "longitude"=>-125,
 	 "private"=>"true",
-	 "tags"=>["updating the tags","tags"]);
+	 "tags"=>array("updating the tags","tags"));
 	 //"fields"=>[{"name":"value","longName":"Data","type":"NUMBER","units":"cm"}]);
 	 //"owner":"anything will be accepted"
 	 
-$updated_sensor_input_2 = array(
+	$updated_sensor_input_2 = array(
 	 "name"=>$generic_sensor, 
 	 "longName"=>"api client test sensor long", 
 	 "description"=>"api client test sensor desc",
@@ -50,25 +57,33 @@ $updated_sensor_input_2 = array(
 	 "longitude"=>-125,
 	 "private"=>"false");
 	 
-$updated_sensor_input_3 = array(
+	$updated_sensor_input_3 = array(
 	 "name"=> $unowned_sensor, 
 	 "longName"=>$unowned_sensor, 
 	 "description"=>$unowned_sensor);
 
-$invalid_field_required = array ("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
-$invalid_field_default = array("name"=>"value", "type"=>"STRING");
-$new_field = array ("required"=>true,"name"=>"testfield", "longName"=>"Test Field", "type"=>"NUMBER",  "units"=>"mm");	
-$updated_field = array ("required"=>false, "name"=>"testfield","longName"=>"Updated Test Field", "type"=>"STRING","units"=>"cm");	
+	$invalid_field_required = array ("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
+	$invalid_field_default = array("name"=>"value", "type"=>"STRING");
+	$new_field = array ("required"=>true,"name"=>"testfield", "longName"=>"Test Field", "type"=>"NUMBER",  "units"=>"mm");	
+	$updated_field = array ("required"=>false, "name"=>"testfield","longName"=>"Updated Test Field", "type"=>"STRING","units"=>"cm");	
 
 //SENSOR DATA
-$nonStandard_sensor_data = array( "value" => 5, "lat" => 6, "lng" => 7, 
-								  "message" => "test message with test field", "testfield"=>9);	 
+	$nonStandard_sensor_data = array( "value" => 5, "lat" => 6, "lng" => 7, 
+								       "message" => "test message with test field", "testfield"=>9);	 
+//QUERYING SENSOR DATA 
+	$start_time = strtotime("7 January 2013 14:00")*1000;
+	$end_time = strtotime("8 January 2013 13:00")*1000;	
+	
 //ACTUATOR NAME AND INPUTS
-$actuator_name = $existing_data_sensor[1];
-$actuator_message = "button=on&value=5";	 
+	$actuator_name = $existing_data_sensor[1];
+	$actuator_message = "button=on&value=5";	 
+
+//---------------------------------------------------------------------------------------//
+/*Begin Tests*/
 
 //TESTING SENSORS
 echo nl2br("[*****TESTING SENSORS******] \n");
+
 #Create 'api-client-test-sensor'
 #Create new sensor
 	echo nl2br("\n\n [CREATE '".$generic_sensor."'] \n");
@@ -124,7 +139,7 @@ echo nl2br("[*****TESTING SENSORS******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status,NULL);
 
-//----------------Sensor Fields------------//
+//----------------Sensor Fields---------------//
 //TESTING SENSOR FIELDS
 echo nl2br("\n\n .....testing sensor fields...... \n");
 #Query mulitple fields for 'api-client-test-sensor'
@@ -249,7 +264,7 @@ echo nl2br("\n\n [QUERY sensor data for '".$generic_sensor."']\n");
 	displayOutput ($data, $test_status,NULL);	
 
 echo nl2br("\n\n ........... \n");
-//--------------------------
+//---------------------------------------//
 
 #Delete 'api-client-test-sensor'
 #Delete a SINGLE sensor that DOES exist
@@ -291,25 +306,27 @@ echo nl2br("\n\n ........... \n");
 	//$message="Not Authorized";
 	//would be 404 error if you didn't specify owner's name
 
+
 //TESTING SENSOR SUBSCRIPTIONS
 echo nl2br("\n\n [*****TESTING SENSOR SUBSCRIPTIONS******] \n");	
 #Get subscribed sensors
 	echo nl2br("\n\n [QUERY subscribed sensors]\n");
+	$expected = 3;
 	$data = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status,NULL);
+	displayOutput ($data, $test_status, $expected);
 
 #Subscribe to a non-private sensor
 	echo nl2br("\n\n [SUBSCRIBE to '".$existing_data_sensor[2]."']\n");
 	$data = $wotkit_client->subscribeSensor($existing_data_sensor[2]);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status,NULL);
+	displayOutput ($data, $test_status, NULL);
 	
 #Subscribe to an already subscribed sensor
 	echo nl2br("\n\n [SUBSCRIBE to already subscribed '".$existing_data_sensor[2]."']\n");
 	$data = $wotkit_client->subscribeSensor($existing_data_sensor[2]);
 	$test_status = $wotkit_client->checkHTTPcode(401);
-	displayOutput ($data, $test_status,NULL);
+	displayOutput ($data, $test_status, NULL);
 
 #Subscribed to a private, non-owned sensor 
 	echo nl2br("\n\n [SUBSCRIBE to another user's private sensor '".$private_unowned_sensor."']\n");
@@ -319,9 +336,10 @@ echo nl2br("\n\n [*****TESTING SENSOR SUBSCRIPTIONS******] \n");
 
 #Get subscribed sensors
 	echo nl2br("\n\n [QUERY subscribed sensors]\n");
+	$expected = 4;
 	$data = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status,NULL);
+	displayOutput ($data, $test_status, $expected);
 
 #Unsubscribe sensor	
 	echo nl2br("\n\n [UNSUBSCRIBE from '".$existing_data_sensor[2]."']\n");
@@ -337,9 +355,10 @@ echo nl2br("\n\n [*****TESTING SENSOR SUBSCRIPTIONS******] \n");
 	
 #Get subscribed sensors
 	echo nl2br("\n\n [QUERY subscribed sensors]\n");
+	$expected = 3;
 	$data = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status,NULL);	
+	displayOutput ($data, $test_status, $expected);	
 
 	
 //TESTING SENSOR DATA
@@ -456,7 +475,7 @@ echo nl2br("\n\n [*****TESTING SENSOR DATA******] \n");
 	displayOutput ($data, $test_status,NULL);
 
 
-	//-------------------------------
+//----------------Sensor Fields---------------//
 //TESTING SENSOR FIELDS
 echo nl2br("\n\n .....testing sensor fields...... \n");
 #Query mulitple fields for 'api-data-test-3'
@@ -521,7 +540,8 @@ echo nl2br("\n\n .....testing sensor fields...... \n");
 	displayOutput ($data, $test_status,NULL);	
 
 echo nl2br("\n\n ........... \n");	
-//-------------------------------
+//--------------------------------//
+
 
 #Querying data from 'api-data-test-3'
 #Querying data from existing  sensor
@@ -570,6 +590,7 @@ echo nl2br("\n\n ........... \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status,NULL);
 
+	
 //TESTING RAW SENSOR DATA RETREIVAL
 echo nl2br("\n\n [*****TESTING RAW SENSOR DATA RETREIVAL******] \n");
 
@@ -588,9 +609,6 @@ echo nl2br("\n\n [*****TESTING RAW SENSOR DATA RETREIVAL******] \n");
 		displayOutput ($data, $test_status, NULL);
 	}
 
-#Querying raw data
-	$start_time = strtotime("7 January 2013 14:00")*1000;
-	$end_time = strtotime("8 January 2013 13:00")*1000;
 	
 #Querying raw data START END
 	echo nl2br("\n\n [Querying raw data from 2pm January 7th to 1pm January 8th from '".$existing_data_sensor[0]."'] \n");
@@ -622,7 +640,7 @@ echo nl2br("\n\n [*****TESTING RAW SENSOR DATA RETREIVAL******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status,NULL);
 
-	
+
 //TESTING FORMATTED SENSOR DATA RETREIVAL
 echo nl2br("\n\n [*****TESTING FORMATTED SENSOR DATA RETREIVAL******] \n");
 #Querying formatted data
@@ -631,7 +649,7 @@ echo nl2br("\n\n [*****TESTING FORMATTED SENSOR DATA RETREIVAL******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, NULL);//special case?
 	
-	
+
 //TESTING QUERYING SENSORS	
 echo nl2br("\n\n [*****TESTING QUERYING SENSORS******] \n");
 	
@@ -742,6 +760,32 @@ echo nl2br("\n\n [*****TESTING QUERYING SENSORS******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);	
 
+//TESTING AGGREGATE SENSOR DATA
+echo nl2br("\n\n [*****TESTING QUERYING AGGREGATE SENSOR DATA******] \n");
+	#Querying data from subscribed, active sensors from last hour
+	echo nl2br("\n\n [Query aggregated sensor data: subscribed, active, last hour] \n");
+	$expected = 2;
+	$params = array("scope" => "subscribed", "active" => true, "before" => 3600000 );	
+	$data = $wotkit_client->getAggregatedData ($params);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	#Querying data from subscribed, active sensors from last 10
+	echo nl2br("\n\n [Query aggregated sensor data: subscribed, active, last 10] \n");
+	$expected = 5;
+	$params = array("scope" => "subscribed", "active" => true, "beforeE" => 10 );	
+	$data = $wotkit_client->getAggregatedData ($params);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	#Querying data from subscribed, active sensors from last 10
+	echo nl2br("\n\n [Query aggregated sensor data: subscribed, active, last 10] \n");
+	$expected = 1;
+	$params = array("scope" => "subscribed", "active" => true, "start" => $start_time, "after"=>3600000 );	
+	$data = $wotkit_client->getAggregatedData ($params);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
 //TESTING DATA FOR ACTUATORS	
 echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 
