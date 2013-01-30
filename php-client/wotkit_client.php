@@ -9,7 +9,7 @@ class wotkit_client {
 	//Uses Oauth2
 	private $client_id;
 	private $client_secret;
-	private $accessToken = null;
+	private $accessToken = 'access_token=none';
 	private $oauthTokenURL = "oauth/token";
 	private $redirectURL = "http://localhost/wotkit_clientTestCases.php";
 	private $hasParameters;
@@ -44,7 +44,7 @@ class wotkit_client {
 
 	private function obtainAccessToken (){
 		$code = $_GET['code'];
-		$accessToken = "none";
+		$accessToken = "access_token=none";
 		$ch = curl_init();
 		if(isset($code)) {
 			// try to get an access token
@@ -65,7 +65,7 @@ class wotkit_client {
 			$accessToken = $json->access_token;	
 			
 			if ($accessToken == null)
-				$accessToken = "none";
+				$accessToken = "access_token=none";
 		}	
 		
 		$this->accessToken = "access_token=".$accessToken;
