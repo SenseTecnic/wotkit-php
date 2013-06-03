@@ -2,7 +2,7 @@
 
 class wotkit_client {
 
-	//Uses a set key in database with "mike" as owner
+	//Uses a set key in database with "tester" as owner
 	private $key_id = "3bfeb222062cb0a6";
 	private $key_password = "894a1b762806471f";
 	
@@ -69,6 +69,8 @@ class wotkit_client {
 		}	
 		
 		$this->accessToken = "access_token=".$accessToken;
+
+		echo nl2br("Using ".$this->accessToken."\n\n");
 	}
 	
 //Public Helper Function
@@ -110,8 +112,8 @@ class wotkit_client {
 	
 	private function subscribeActuator($sensor){
 		$this->hasParameters = false;
-		$message=1;
-		$data = $this->processRequest("control/sub/".$sensor, "POST", $message, true);
+		$dummy_data=1; //dummy data becuase processRequest() wants all POSTS/PUTS to have data 
+		$data = $this->processRequest("control/sub/".$sensor, "POST", $dummy_data, true);
 		return $data;
 	}
 	
@@ -132,8 +134,9 @@ class wotkit_client {
 		//required fields name, longname, desc
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
-		
+	
 		$sensor_input = $this->ArraytoJSON($data_array);
+
 		$data = $this->processRequest( "sensors", "POST", $sensor_input);	
 		
 		$data = json_decode($data, true);
@@ -141,12 +144,29 @@ class wotkit_client {
 		
 	}
 	
-	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL) 
+	public function createMultipleSensor($multi_dim_array){
+		//required fields name, longname, desc
+		$this->expected_http_code = 201;
+		$this->hasParameters = false;
+		
+		$sensor_input = $this->ArraytoJSONList($multi_dim_array);
+		
+		$data = $this->processRequest( "sensors", "PUT", $sensor_input);	
+		
+		$data = json_decode($data, true);
+		echo $data;
+		return $data;
+		
+	}
+	
+	
+	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL) 
 	{	$this->expected_http_code = 200;
 	
 		if ($sensor == NULL){
 			$params = array("scope" => $scope, "active" => $active, "private" => $private, 
-							"tags" => $tags, "text" => $text, "offset" => $offset, "limit" => $limit);
+							"tags" => $tags, "text" => $text, "offset" => $offset, "limit" => $limit,
+							"location" => $this->NWSELocationBox($location));
 			  
 			$url_string = "sensors?".$this->ArraytoNameValuePairs($params);
 			$this->hasParameters = true;
@@ -291,12 +311,14 @@ class wotkit_client {
 //Aggregated Sensor Data
 	  public function getAggregatedData ($params){
 	//public function getSensors($scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL,
-	//						     $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL) 
+	//						     $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL,
+	//							 $orderBy=NULL) 
 	//{	
 	//	$params = array("scope" => $scope, "active" => $active, "private" => $private, 
 	//					"tags" => $tags, "text" => $text, 
 	//					"start" => $start, "end" => $end, "after" => $after, 
-	//					"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE);
+	//					"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE,
+	//				    "orderBy" => $orderBy);
 		
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
@@ -360,7 +382,7 @@ class wotkit_client {
 	public function updateSensorData ($sensor, $multi_dim_array){
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
-		
+		/*
 		$sensor_data = '[';
 		
 		$started = false;
@@ -374,7 +396,10 @@ class wotkit_client {
 			$sensor_data .=  $this->ArraytoJSON($array);	
 		};
 		$sensor_data .= ']';
-
+		*/
+		
+		$sensor_data = $this->ArraytoJSONList($multi_dim_array);
+		
 		$data = $this->processRequest( "sensors/".$sensor."/data", "PUT", $sensor_data);
 		
 		$data = json_decode($data, true);
@@ -390,12 +415,13 @@ class wotkit_client {
 		return $data;
 	}
 
-	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL){
+	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
 		
 		$params = array("start" => $start, "end" => $end, "after" => $after, 
-						"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE);
+						"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE,
+						"reverse"=> $reverse);
 			  
 		$url_string = "sensors/".$sensor."/data?".$this->ArraytoNameValuePairs($params);
 		
@@ -444,6 +470,65 @@ class wotkit_client {
 		return $data;
 	}
 
+//Users	
+	public function getUsers($user=NULL, $text=NULL, $reverse=NULL, $offset=NULL, $limit=NULL) 
+	{	$this->expected_http_code = 200;
+	
+		if ($user == NULL){
+			$params = array("text" => $text, "reverse" => $reverse, "offset" => $offset, 
+							"limit" => $limit );
+			  
+			$url_string = "users?".$this->ArraytoNameValuePairs($params);
+			$this->hasParameters = true;
+			
+			if ( substr($url_string, -1) == '?' ){
+				$url_string=substr_replace($url_string ,"",-1);
+				$this->hasParameters = false;
+			}	
+		}
+		else{
+			$url_string = "users/".$user;
+			$this->hasParameters = false;
+		}
+	
+		$data = $this->processRequest ( $url_string, "GET");
+		
+		$data = json_decode($data, true);
+		return $data;
+	}
+	
+	public function createUser($user_array){
+		//required fields username, firstname, lastname, email, password
+		$this->expected_http_code = 201;
+		$this->hasParameters = false;
+	
+		$user_input = $this->ArraytoJSON($user_array);
+
+		$data = $this->processRequest( "users", "POST", $user_input);	
+		
+		$data = json_decode($data, true);
+		return $data;		
+	}
+	
+	public function updateUser($user, $user_array){
+		$this->expected_http_code = 204;
+		$this->hasParameters = false;
+		
+		$updated_user_input = $this->ArraytoJSON($user_array);
+		$data = $this->processRequest( "users/".$user, "PUT", $updated_user_input);
+		$data = json_decode($data, true);
+		return $data;
+	}
+	
+	public function deleteUser($user){
+		$this->expected_http_code = 204;
+		$this->hasParameters = false;
+		
+		$data = $this->processRequest( "users/".$user, "DELETE");
+		$data = json_decode($data, true);
+		return $data;
+	}
+	
 //Basic Request
 	//@param str  $url
 	//				task specific url ending
@@ -478,8 +563,6 @@ class wotkit_client {
 					$url = $url."&".$this->accessToken;
 				else	
 					$url = $url."?".$this->accessToken;
-				
-				echo $url;
 			}		
 		}
 		
@@ -546,7 +629,25 @@ class wotkit_client {
 		//echo $url_string;
 		return $url_string;
 	}
+	
+	private function ArraytoJSONList($multi_dim_array){
+		$started = false;
+		$sensor_input = "[";
 
+		foreach ($multi_dim_array as $data_array){
+			if ( $started == false){
+				$started = true;
+			}	
+			else{
+				$sensor_input.= ',';
+			};
+			$sensor_input .= $this->ArraytoJSON($data_array);
+		};
+		$sensor_input.= ']';
+		
+		return $sensor_input;
+	}
+	
 	private function ArraytoJSON($data_array){
 		
 		$started = false; 
@@ -594,5 +695,20 @@ class wotkit_client {
 		
 		return $sensor_input;
 	}
+	
+	private function NWSELocationBox ($location){
+		if( $location == NULL ){
+			return NULL;
+		}
+		
+		//$corners = array_chunk($location, 2);
+		//$location_box = implode(':', array(implode(',', $corners[0]), implode(',', $corners[1])));
+	
+		$location_box = $location[0].",".$location[1].":".$location[2].",".$location[3];
+		return $location_box;
+	}
+	
+
+	
 }
 ?>
