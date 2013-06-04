@@ -26,6 +26,7 @@ $failures = 0;
 	//id=42 - has data added and then deleted
 	$unowned_sensor_full = "sensetecnic.mule1"; //id=1
 	$unowned_sensor_short = "mule1";
+	$unowned_actuator_full = "sensetecnic.qofob"; //id=13
 	$private_unowned_sensor = "sensetecnic.api-test-private"; //id=43
 	
 //SENSOR INPUTS	
@@ -837,12 +838,14 @@ echo nl2br("\n\n [*****TESTING QUERYING SENSORS******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);
 
+	/*
 	#Querying ACTIVE
 	echo nl2br("\n\n [Query ACTIVE] \n");
 	$expected = 3;
 	$data = $wotkit_client->getSensors (null, NULL,"true");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);
+	*/
 	
 	#Querying PRIVATE
 	echo nl2br("\n\n [Query PRIVATE] \n");
@@ -1008,11 +1011,11 @@ echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 	displayOutput ($data, $test_status, $expected);	
 	
 	#Subscribe to, send data to, get data from actuator you DO NOT own
-	echo nl2br("\n\n [Subscribe to , send data to, and get data from actuator '".$unowned_sensor_full."'] \n");
+	echo nl2br("\n\n [Subscribe to , send data to, and get data from actuator '".$unowned_actuator_full."'] \n");
 	$expected = 1;
 	echo nl2br("Sending messge ".$actuator_message."\n");
 	echo nl2br("Response:\n");
-	$data=$wotkit_client->testActuator($unowned_sensor_full, $actuator_message);
+	$data=$wotkit_client->testActuator($unowned_actuator_full, $actuator_message);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);	
 	
