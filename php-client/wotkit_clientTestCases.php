@@ -818,8 +818,8 @@ echo nl2br("\n\n [*****TESTING QUERYING SENSORS******] \n");
 	#Querying ALL
 	//should not include private sensor
 	echo nl2br("\n\n [Query ALL] \n");
-	$total_sensors = count($data);
 	$data = $wotkit_client->getSensors(null,"all") ;
+	$total_sensors = count($data);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $total_sensors);
 	
@@ -849,7 +849,7 @@ echo nl2br("\n\n [*****TESTING QUERYING SENSORS******] \n");
 	$private = 1;
 	$data = $wotkit_client->getSensors (null, NULL, NULL,"true");
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status, $expected);
+	displayOutput ($data, $test_status, $private);
 	
 	#Querying NOT PRIVATE
 	echo nl2br("\n\n [Query NOT PRIVATE] \n");
