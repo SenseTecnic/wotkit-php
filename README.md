@@ -3,12 +3,15 @@ wotkit-php
 
 PHP Client binding for the wotkit
 
+
 FILES:
+
 wotkit_client.php
   set of functions for WoKIT api & authentication
   
 wotkit_clientTestCases.php
   set of test cases for WoKIT api
+  assumes a newly initialized database
   
 wotkit_clientConfig.php
   configuration file
