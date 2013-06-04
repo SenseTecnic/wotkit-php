@@ -6,20 +6,20 @@ PHP Client binding for the wotkit
 
 FILES:
 
-wotkit_client.php
-  set of functions for WoKIT api & authentication
+1. wotkit_client.php
+  - set of functions for WoKIT api & authentication
   
-wotkit_clientTestCases.php
-  set of test cases for WoKIT api
-  assumes a newly initialized database
+2. wotkit_clientTestCases.php
+  - set of test cases for WoKIT api
+  - assumes a newly initialized database
   
-wotkit_clientConfig.php
-  configuration file
-  set base_url for the WoKIT and client_id & client_secret (for Oauth2) here
+3. wotkit_clientConfig.php
+  - configuration file
+  - set base_url for the WoKIT and client_id & client_secret (for Oauth2) here
   
-wotkit_ClientOauth2Testing.php
-  run this file for Oauth2 testing 
-  do NOT run this file with Firefox
+4. wotkit_ClientOauth2Testing.php
+  - run this file for Oauth2 testing 
+  - do NOT run this file with Firefox
   
 
 TESTING:
