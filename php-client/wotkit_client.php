@@ -364,13 +364,17 @@ class wotkit_client {
 		return $data;
 	}
 	
-	public function sendNonStandardSensorData($sensor, $data_array){
+	public function sendNonStandardSensorData($sensor, $data_array, $JSON=false){
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 		
-		$sensor_data = $this->ArraytoNameValuePairs($data_array);
-		$data = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false);
-	
+		if ($JSON) {
+			$sensor_data = $this->ArraytoJSON($data_array);
+			$data = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, true);
+		} else {
+			$sensor_data = $this->ArraytoNameValuePairs($data_array);
+			$data = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false);
+		}
 		$data = json_decode($data, true);
 		//Allows time for the new Sensor Data to be processed before moving on. 
 		//Without sleep, you may try to query data before it has been processed. 
@@ -378,6 +382,7 @@ class wotkit_client {
 
 		return $data;
 	}
+	
 	
 	public function updateSensorData ($sensor, $multi_dim_array){
 		$this->expected_http_code = 204;
@@ -692,7 +697,7 @@ class wotkit_client {
 			$sensor_input.= ']';								
 		}
 		$sensor_input.= "}";	
-		
+
 		return $sensor_input;
 	}
 	
