@@ -9,7 +9,7 @@ class wotkit_client {
 	//Uses Oauth2
 	private $client_id;
 	private $client_secret;
-	private $accessToken = 'access_token=none';
+	private $accessToken = 'none';
 	private $oauthTokenURL = "oauth/token";
 	private $redirectURL = "http://localhost/wotkit_clientTestCases.php";
 	private $hasParameters;
@@ -44,7 +44,7 @@ class wotkit_client {
 
 	private function obtainAccessToken (){
 		$code = $_GET['code'];
-		$accessToken = "access_token=none";
+		$accessToken = "none";
 		$ch = curl_init();
 		if(isset($code)) {
 			// try to get an access token
@@ -65,12 +65,15 @@ class wotkit_client {
 			$accessToken = $json->access_token;	
 			
 			if ($accessToken == null)
-				$accessToken = "access_token=none";
+				$accessToken = "none";
 		}	
 		
 		$this->accessToken = "access_token=".$accessToken;
 
-		echo nl2br("Using ".$this->accessToken."\n\n");
+		if ( $this->accessToken == "access_token=none" )
+			echo nl2br("Using key \n\n");
+		else
+			echo nl2br("Using ".$this->accessToken."\n\n");
 	}
 	
 //Public Helper Function
@@ -100,32 +103,43 @@ class wotkit_client {
 //Actuators Functions
 	public function testActuator ($sensor, $message){
 		$this->expected_http_code = 200;
-
+		
+		
 		$data = $this->subscribeActuator($sensor);
-		$response = json_decode($data, true);
-		$sub_id = $response[subscription];
+		$sub_id = $data[subscription];
 		$data = $this->sendActuator($sensor, $message);
 		$data = $this->getActuator($sub_id);
-		$data = json_decode($data, true);
+		
 		return $data;		
 	}
 	
-	private function subscribeActuator($sensor){
+	public function sendAndGetActuator($sensor, $message, $sub_id, $public){
+		$data = $this->sendActuator($sensor, $message, $public);
+		$data = $this->getActuator($sub_id);
+		return $data;
+	}
+		
+	public function subscribeActuator($sensor){
 		$this->hasParameters = false;
 		$dummy_data=1; //dummy data becuase processRequest() wants all POSTS/PUTS to have data 
 		$data = $this->processRequest("control/sub/".$sensor, "POST", $dummy_data, true);
+		$data = json_decode($data, true);
 		return $data;
 	}
 	
-	private function sendActuator($sensor, $message){
+	public function sendActuator($sensor, $message, $public=false){
+		//$this->expected_http_code = 204;
 		$this->hasParameters = false;
-		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false);
+		$message = $this->ArraytoNameValuePairs($message);
+		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public);
 		return $data;
 	}
-	
-	private function getActuator($sub_id){
+
+	public function getActuator($sub_id){
+		$this->expected_http_code = 200;
 		$this->hasParameters = true;
 		$data = $this->processRequest("control/sub/".$sub_id."?wait=10", "GET");
+		$data = json_decode($data, true);
 		return $data;
 	}
 	
@@ -160,7 +174,7 @@ class wotkit_client {
 	}
 	
 	
-	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL) 
+	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false) 
 	{	$this->expected_http_code = 200;
 	
 		if ($sensor == NULL){
@@ -182,7 +196,7 @@ class wotkit_client {
 			$this->hasParameters = false;
 		}
 		
-		$data = $this->processRequest ( $url_string, "GET");
+		$data = $this->processRequest ( $url_string, "GET", null, 1, $public);
 		
 		$data = json_decode($data, true);
 		return $data;
@@ -259,11 +273,11 @@ class wotkit_client {
 	}
 
 //Sensor Field Functions
-	public function getSensorFields ($sensor=null, $field=null){
+	public function getSensorFields ($sensor=null, $field=null, $public){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
 		
-		$data = $this->processRequest ("sensors/".$sensor."/fields/".$field, "GET");
+		$data = $this->processRequest ("sensors/".$sensor."/fields/".$field, "GET", null, 1, $public);
 		$data = json_decode($data, true);
 		return $data;
 	}
@@ -338,11 +352,11 @@ class wotkit_client {
 
 	
 //Sensor Data Functions
-	public function getSensorData ($sensor){
+	public function getSensorData ($sensor, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
 		
-		$data = $this->processRequest( "sensors/".$sensor."/data", "GET");
+		$data = $this->processRequest( "sensors/".$sensor."/data", "GET", null, 1, $public);
 		$data = json_decode($data, true);
 		return $data;
 	}
@@ -354,7 +368,7 @@ class wotkit_client {
 		$params = array( "timestamp" => $timestamp, "value" => $value, 
 						 "lat" => $lat, "lng" => $lng, "message" => $message );
 		$sensor_data = $this->ArraytoNameValuePairs($params);
-		$data = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false);
+		$data = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false, $public);
 	
 		$data = json_decode($data, true);
 		//Allows time for the new Sensor Data to be processed before moving on. 
@@ -420,7 +434,7 @@ class wotkit_client {
 		return $data;
 	}
 
-	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL){
+	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
 		
@@ -435,13 +449,13 @@ class wotkit_client {
 			$this->hasParameters = false;
 		}
 		
-		$data = $this->processRequest ( $url_string, "GET");	
+		$data = $this->processRequest ( $url_string, "GET", null, 1, $public);	
 		
 		$data = json_decode($data, true);
 		return $data;
 	}
 	
-	public function getFormattedSensorData($sensor, $tq=NULL, $reqID=NULL, $out=NULL, $outfile=NULL){
+	public function getFormattedSensorData($sensor, $tq=NULL, $reqID=NULL, $out=NULL, $outfile=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
 		
@@ -470,7 +484,7 @@ class wotkit_client {
 			$this->hasParameters = false;
 		}
 		
-		$data = $this->processRequest ( $url_string, "GET");
+		$data = $this->processRequest ( $url_string, "GET", null, 1, $public);
 		
 		return $data;
 	}
@@ -533,6 +547,26 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+
+//News
+	public function getNews(){
+		$this->expected_http_code = 200;
+		$this->hasParameters = false;
+		
+		$data = $this->processRequest( "news", "GET", null, 1, true);
+		$data = json_decode($data, true);
+		return $data;
+	}
+
+//Stats
+	public function getStats(){
+		$this->expected_http_code = 200;
+		$this->hasParameters = false;
+		
+		$data = $this->processRequest( "stats", "GET", null, 1, true);
+		$data = json_decode($data, true);
+		return $data;
+	}
 	
 //Basic Request
 	//@param str  $url
@@ -542,7 +576,7 @@ class wotkit_client {
 	//@param str  $data
 	//@param bool $isJson 
 	//				whether input $data is JSON string 
-	private function processRequest ($url, $request, $data=null, $isJSON=1){
+	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false){
 	
 		//Clearing old data
 		$this->response =array();
@@ -558,17 +592,20 @@ class wotkit_client {
 		#Setting cURL options
 		
 		//Logging In
-		if ($this->accessToken != "setting" ){
-			if ( $this->accessToken == "access_token=none" ){
-				curl_setopt($ch, CURLOPT_USERPWD,"{$this->key_id}:{$this->key_password}");
-				echo "key";
+		if ( !$public ){
+			if ($this->accessToken != "setting" ){
+				if ( $this->accessToken == "access_token=none" ){
+					curl_setopt($ch, CURLOPT_USERPWD,"{$this->key_id}:{$this->key_password}");
+				}
+				else{
+					if ( $this->hasParameters == true )
+						$url = $url."&".$this->accessToken;
+					else	
+						$url = $url."?".$this->accessToken;
+				}		
 			}
-			else{
-				if ( $this->hasParameters == true )
-					$url = $url."&".$this->accessToken;
-				else	
-					$url = $url."?".$this->accessToken;
-			}		
+		} else{
+			echo("Public, no authentication");
 		}
 		
 		//Entering URL
@@ -582,7 +619,7 @@ class wotkit_client {
 			//Necessary for these actions: Create New Sensor, Update Sensor
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json")); 
 		}
-
+		
 		if ($request == "PUT")
 		{
 			//Update Sensor or Sensor Data
