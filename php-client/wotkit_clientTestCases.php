@@ -91,7 +91,7 @@ $failures = 0;
 	$num_field = array ("required"=>false,"name"=>"numtestfield", "longName"=>"Num Test Field", "type"=>"NUMBER");	
 	$string_field = array ("required"=>false,"name"=>"stringtestfield", "longName"=>"String Test Field", "type"=>"STRING");	
 
-	//SENSOR DATA
+//SENSOR DATA
 	$nonStandard_sensor_data = array( "value" => 5, "lat" => 6, "lng" => 7, 
 								       "message" => "test message with test field", "testfield"=>9);	 
 //QUERYING SENSOR DATA 
@@ -1142,7 +1142,7 @@ echo nl2br("\n\n [*****DELETING ADDED DATA ******] \n");
 			$test_status = $wotkit_client->checkHTTPcode();
 			displayOutput ($data, $test_status, NULL);
 		}
-		
+	
 
 //TESTING DATA FOR ACTUATORS	
 echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
@@ -1162,14 +1162,13 @@ echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 	echo nl2br("Sending messge ".$actuator_message_display."\n");
 	$public = true;
 	$expected = 1;
-	
 	$data=$wotkit_client->subscribeActuator($actuator_name);
 	$sub_id = $data["subscription"];	
-	//$data=$wotkit_client->sendAndGetActuator($actuator_name_full, $actuator_message, $sub_id, $public);
 	$data=$wotkit_client->sendActuator($actuator_name_full, $actuator_message, $public);
-	
-	
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
 	echo nl2br("\nResponse:\n");
+	$data = $wotkit_client->getActuator($sub_id);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);	
 	*/
@@ -1181,7 +1180,7 @@ echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayOutput ($data, $test_status,null);	
 	
-		
+	
 //TESTING USERS
 echo nl2br("\n\n [*****TESTING USERS******] \n");	
 	#Create invalid username
@@ -1319,7 +1318,7 @@ $public = true;
 	$expected = 5;
 	$data = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status, $expected, true);
+	displayOutput ($data, $test_status, $expected);
 
 #Query  'api-client-test-sensor'
 #Query a SINGLE sensor that DOES exist
@@ -1362,7 +1361,7 @@ $public = true;
 
 #Querying formatted data
 	echo nl2br("\n\n [Querying formatted data in HTML table where value>30 from '".$existing_data_sensor_full[0]."'] \n");
-	$data = $wotkit_client->getFormattedSensorData( $existing_data_sensor_full[0], "select * where value>20", 1, "html", $public); 
+	$data = $wotkit_client->getFormattedSensorData( $existing_data_sensor_full[0], "select * where value>20", 1, "html", NULL, $public); 
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, NULL);//special case in function?		
 	

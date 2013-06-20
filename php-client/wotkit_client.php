@@ -112,12 +112,6 @@ class wotkit_client {
 		
 		return $data;		
 	}
-	
-	public function sendAndGetActuator($sensor, $message, $sub_id, $public){
-		$data = $this->sendActuator($sensor, $message, $public);
-		$data = $this->getActuator($sub_id);
-		return $data;
-	}
 		
 	public function subscribeActuator($sensor){
 		$this->hasParameters = false;
@@ -128,7 +122,7 @@ class wotkit_client {
 	}
 	
 	public function sendActuator($sensor, $message, $public=false){
-		//$this->expected_http_code = 204;
+		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		$message = $this->ArraytoNameValuePairs($message);
 		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public);
@@ -610,7 +604,7 @@ class wotkit_client {
 		
 		//Entering URL
 		curl_setopt($ch, CURLOPT_URL, $url);
-		
+
 		//Allows results to be saved in variable and not printed out
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
@@ -638,7 +632,7 @@ class wotkit_client {
 			curl_setopt($ch, CURLOPT_POST, TRUE);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		}
-
+	
 		//Save response and information
 		$this->response = curl_exec($ch);
 		$this->response_info = curl_getinfo($ch);
