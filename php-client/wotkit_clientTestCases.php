@@ -142,7 +142,7 @@ $failures = 0;
 //---------------------------------------------------------------------------------------//
 /*Begin Tests*/
 
-
+/*
 //TESTING SENSORS
 echo nl2br("[*****TESTING SENSORS******] \n");
 
@@ -573,7 +573,7 @@ echo nl2br("\n\n [TESTING SENDING SENSOR DATA] \n");
 	$expected = 2;
 	$data = $wotkit_client->getSensorData ($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status, $expected, true);
+	displayOutput ($data, $test_status, $expected);
 
 
 #Post Name/Value pair undeclared data
@@ -1147,6 +1147,7 @@ echo nl2br("\n\n [*****DELETING ADDED DATA ******] \n");
 //TESTING DATA FOR ACTUATORS	
 echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 
+
 	#Subscribe to, send data to, and get data from actuator you DO own
 	echo nl2br("\n\n [Subscribe to, send data to, and get data from OWNED actuator '".$actuator_name."'] \n");
 	$expected = 1;
@@ -1156,7 +1157,7 @@ echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);	
 
-	/*
+	
 	#Send data to actuator you DO NOT own
 	echo nl2br("\n\n [Without credentials -> Send data to PUBLIC actuator '".$actuator_name_full."'] \n");
 	echo nl2br("Sending messge ".$actuator_message_display."\n");
@@ -1165,21 +1166,40 @@ echo nl2br("\n\n [*****TESTING DATA FOR ACTUATORS******] \n");
 	$data=$wotkit_client->subscribeActuator($actuator_name);
 	$sub_id = $data["subscription"];	
 	$data=$wotkit_client->sendActuator($actuator_name_full, $actuator_message, $public);
-	$test_status = $wotkit_client->checkHTTPcode();
-	displayOutput ($data, $test_status, $expected);	
 	echo nl2br("\nResponse:\n");
 	$data = $wotkit_client->getActuator($sub_id);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);	
-	*/
 	
-	#Send data to PRIVATE actuator you DO NOT own
-	echo nl2br("\n\n [Send data to UNOWNED, PRIVATE actuator '".$private_unowned_sensor."'] \n");
+	#Send data to actuator you DO NOT own
+	echo nl2br("\n\n [With non-owner credentials -> Send data to PUBLIC actuator '".$actuator_name_full."'] \n");
+	echo nl2br("Sending messge ".$actuator_message_display."\n");
+	$public = true;
+	$expected = 1;
+	$data=$wotkit_client->subscribeActuator($actuator_name);
+	$sub_id = $data["subscription"];	
+	$data=$wotkit_client->sendActuator($actuator_name_full, $actuator_message, $public, true);
+	echo nl2br("\nResponse:\n");
+	$data = $wotkit_client->getActuator($sub_id);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	
+	#Subscribe to PRIVATE actuator you DO NOT own
+	echo nl2br("\n\n [Subscribe to UNOWNED, PRIVATE actuator '".$private_unowned_sensor."'] \n");
+	echo nl2br("Sending messge ".$actuator_message_display."\n");
+	$data=$wotkit_client->subscribeActuator($private_unowned_sensor, $actuator_message);
+	$test_status = $wotkit_client->checkHTTPcode(401);
+	displayOutput ($data, $test_status, null);	
+	
+	#Send message to PRIVATE actuator you DO NOT own
+	echo nl2br("\n\n [Send message to UNOWNED, PRIVATE actuator '".$private_unowned_sensor."'] \n");
 	echo nl2br("Sending messge ".$actuator_message_display."\n");
 	$data=$wotkit_client->sendActuator($private_unowned_sensor, $actuator_message);
 	$test_status = $wotkit_client->checkHTTPcode(401);
-	displayOutput ($data, $test_status,null);	
-	
+	displayOutput ($data, $test_status, null);	
+
+
 	
 //TESTING USERS
 echo nl2br("\n\n [*****TESTING USERS******] \n");	
@@ -1292,6 +1312,7 @@ echo nl2br("\n\n [*****TESTING USERS******] \n");
 	displayOutput ($data, $test_status, NULL);
 
 	
+	
 //TESTING NEWS
 echo nl2br("\n\n [*****TESTING NEWS******] \n");	
 	#Get news
@@ -1301,6 +1322,7 @@ echo nl2br("\n\n [*****TESTING NEWS******] \n");
 	displayOutput ($data, $test_status, NULL);	
 	
 	
+	
 //TESTING STATS
 echo nl2br("\n\n [*****TESTING STATS******] \n");	
 	#Get news
@@ -1308,13 +1330,98 @@ echo nl2br("\n\n [*****TESTING STATS******] \n");
 	$data = $wotkit_client->getNews();
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, NULL);	
-
+*/
 	
+	
+//TESTING TAGS
+echo nl2br("\n\n [*****TESTING TAGS******] \n");	
+	#Get all tags
+	echo nl2br("\n\n [Get all tags] \n");
+	$data = $wotkit_client->getTags("all");
+	$all_tags = count($data);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $all_tags);	
+	echo nl2br("\n assumes this is the correct number of tags");
+	
+	#Get subscribed tags
+	$expected = 4;
+	echo nl2br("\n\n [Get subscribed tags] \n");
+	$data = $wotkit_client->getTags("subscribed");
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	#Get contributed tags
+	$expected = 5;
+	echo nl2br("\n\n [Get contributed tags] \n");
+	$data = $wotkit_client->getTags("contributed");
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	#Get private tags
+	$private_tags = 1;
+	echo nl2br("\n\n [Get private tags] \n");
+	$data = $wotkit_client->getTags(null, true);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $private_tags);	
+	
+	#Get text tags
+	$expected = 3; 
+	echo nl2br("\n\n [Get text=api-data-test-2 tags] \n");
+	$data = $wotkit_client->getTags(null, null, "api-data-test-2", null, null, null, null );
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);
+	
+	#Get subscribed, active
+	$expected = 3; 
+	echo nl2br("\n\n [Get subscribed and active tags] \n");
+	$data = $wotkit_client->getTags("subscribed", null, null, true, null, null, null);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);
+	
+	#Get subscribed, active, offset
+	$expected = 2; 
+	echo nl2br("\n\n [Get subscribed and active tags with offset of 1] \n");
+	$data = $wotkit_client->getTags("subscribed", null, null, true, 1, null, null );
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);
+	
+	#Get subscribed, active, limit
+	$expected = 1; 
+	echo nl2br("\n\n [Get subscribed and active tags with limit of 1] \n");
+	$data = $wotkit_client->getTags("subscribed", null, null, true, null, 1, null );
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);
+	
+	#Get location tags
+	$expected = 0;
+	echo nl2br("\n\n [Get location=Kilkenny tags] \n");
+	$data = $wotkit_client->getTags(null, null, null, null, null, null, $location_kilkenny );
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);
+	
+	$public = true;
+	
+	#Get all, with no credentials
+	echo nl2br("\n\n [Get all tags with no credentials] \n");
+	$expected = $all_tags - $private_tags;
+	$data = $wotkit_client->getTags("all", null, null, null, null, null, null, $public);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	#Get all, limit 2, with no credentials
+	echo nl2br("\n\n [Get all tags with limit 2 and no credentials] \n");
+	$expected = 2;
+	$data = $wotkit_client->getTags("all", null, null, null, null, 2, null, $public);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected);	
+	
+	
+/*	
 //PUBLIC FUNCTIONS
 echo nl2br("\n\n [*****TESTING PUBLIC FUNCTIONS******] \n");	
 $public = true;
 #Query for multiple sensors
-	echo nl2br("\n\n [QUERY PUBLIC, existing sensors]\n");
+	echo nl2br("\n\n [QUERY PUBLIC, existing sensors, limit 5]\n");
 	$expected = 5;
 	$data = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1377,7 +1484,7 @@ $public = true;
 	$data = $wotkit_client->getSensorFields ($existing_data_sensor_full[2], null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayOutput ($data, $test_status, NULL);	
-
+*/
 	
 //RESULTS		
 echo nl2br("\n\n [*****RESULTS******] \n");

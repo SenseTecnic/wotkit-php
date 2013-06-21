@@ -104,7 +104,6 @@ class wotkit_client {
 	public function testActuator ($sensor, $message){
 		$this->expected_http_code = 200;
 		
-		
 		$data = $this->subscribeActuator($sensor);
 		$sub_id = $data[subscription];
 		$data = $this->sendActuator($sensor, $message);
@@ -114,6 +113,7 @@ class wotkit_client {
 	}
 		
 	public function subscribeActuator($sensor){
+		$this->expected_http_code = 200;
 		$this->hasParameters = false;
 		$dummy_data=1; //dummy data becuase processRequest() wants all POSTS/PUTS to have data 
 		$data = $this->processRequest("control/sub/".$sensor, "POST", $dummy_data, true);
@@ -121,11 +121,11 @@ class wotkit_client {
 		return $data;
 	}
 	
-	public function sendActuator($sensor, $message, $public=false){
+	public function sendActuator($sensor, $message, $public=false, $special=false){
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		$message = $this->ArraytoNameValuePairs($message);
-		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public);
+		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public, $special);
 		return $data;
 	}
 
@@ -238,6 +238,7 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+	
 //Sensor Subscription Functions
 	public function getSubscribedSensors (){
 		$this->expected_http_code = 200;
@@ -316,6 +317,7 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+	
 //Aggregated Sensor Data
 	  public function getAggregatedData ($params){
 	//public function getSensors($scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL,
@@ -395,21 +397,6 @@ class wotkit_client {
 	public function updateSensorData ($sensor, $multi_dim_array){
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
-		/*
-		$sensor_data = '[';
-		
-		$started = false;
-		foreach ( $multi_dim_array as $array ){
-			if ( $started == false ){
-				$started = true;
-			}
-			else{
-				$sensor_data .= ",";
-			};
-			$sensor_data .=  $this->ArraytoJSON($array);	
-		};
-		$sensor_data .= ']';
-		*/
 		
 		$sensor_data = $this->ArraytoJSONList($multi_dim_array);
 		
@@ -418,6 +405,7 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+	
 	
 	public function deleteSensorData ($sensor, $timestamp){
 		$this->expected_http_code = 204;
@@ -428,6 +416,7 @@ class wotkit_client {
 		return $data;
 	}
 
+	
 	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
@@ -562,6 +551,20 @@ class wotkit_client {
 		return $data;
 	}
 	
+//Tags
+	public function getTags($scope=NULL, $private=NULL, $text=NULL, $active=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false){
+		$this->expected_http_code = 200;
+		$this->hasParameters = true;
+		$params = array("scope" => $scope, "private" => $private, "text" => $text, "active"=> $active, 
+						"offset" => $offset, "limit" => $limit, "location" => $this->NWSELocationBox($location) );
+		
+		$url_string = "tags?".$this->ArraytoNameValuePairs($params);
+		echo $url_string;
+		$data = $this->processRequest($url_string, "GET", null, false, $public);
+		$data = json_decode($data, true);
+		return $data;
+	}	
+	
 //Basic Request
 	//@param str  $url
 	//				task specific url ending
@@ -570,11 +573,11 @@ class wotkit_client {
 	//@param str  $data
 	//@param bool $isJson 
 	//				whether input $data is JSON string 
-	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false){
+	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special=NULL){
 	
 		//Clearing old data
-		$this->response =array();
-		$this->response_info =array();
+		$this->response = array();
+		$this->response_info = array();
 		
 		//Updating to full URL
 		if($this->accessToken != "setting" )
@@ -587,7 +590,7 @@ class wotkit_client {
 		
 		//Logging In
 		if ( !$public ){
-			if ($this->accessToken != "setting" ){
+			if ($this->accessToken != "setting"){
 				if ( $this->accessToken == "access_token=none" ){
 					curl_setopt($ch, CURLOPT_USERPWD,"{$this->key_id}:{$this->key_password}");
 				}
@@ -599,7 +602,13 @@ class wotkit_client {
 				}		
 			}
 		} else{
-			echo("Public, no authentication");
+			if ($special){
+				echo("Different user\n");
+				curl_setopt($ch, CURLOPT_USERPWD,"sensetecnic:aMUSEment2");
+			}
+			else{
+				echo("Public, no authentication\n");
+			}
 		}
 		
 		//Entering URL
@@ -636,7 +645,7 @@ class wotkit_client {
 		//Save response and information
 		$this->response = curl_exec($ch);
 		$this->response_info = curl_getinfo($ch);
-		
+
 		#Closing cURL
 		curl_close($ch);
 		
@@ -662,7 +671,6 @@ class wotkit_client {
 			}
 		}
 		
-		//echo $url_string;
 		return $url_string;
 	}
 	
