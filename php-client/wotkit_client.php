@@ -20,7 +20,10 @@ class wotkit_client {
 	public $response_info;
 	public $expected_http_code;
 	
-
+	
+/*	
+ *Client Constructors
+ */
 	function __construct( $base_url=NULL, $client_id=NULL, $client_secret=NULL ){
 		
 		if ($base_url != null)
@@ -42,6 +45,9 @@ class wotkit_client {
 		$this->client_secret = $client_secret;
 	}
 
+/*	
+ *Oauth2 Functions	
+ */
 	private function obtainAccessToken (){
 		$code = $_GET['code'];
 		$accessToken = "none";
@@ -76,7 +82,10 @@ class wotkit_client {
 			echo nl2br("Using ".$this->accessToken."\n\n");
 	}
 	
-//Public Helper Function
+	
+/*	
+ *Public Helper Function
+ */
 	public function checkHTTPcode( $expected_http_code=NULL, $message=NULL )
 	{
 		if( $expected_http_code == NULL )
@@ -100,7 +109,12 @@ class wotkit_client {
 		return $response;
 	}
 	
+/*
+ * WoTKit API Functions
+ */	
+	
 //Actuators Functions
+
 	public function testActuator ($sensor, $message){
 		$this->expected_http_code = 200;
 		
@@ -121,8 +135,12 @@ class wotkit_client {
 		return $data;
 	}
 	
+	/* sendActuator()
+	 * public = true  => do not supply any credentials
+	 * special = true => supply credentials for different user
+	 */
 	public function sendActuator($sensor, $message, $public=false, $special=false){
-		$this->expected_http_code = 204;
+		$this->expected_http_code = 200; //documentation said 204, but always get 200....
 		$this->hasParameters = false;
 		$message = $this->ArraytoNameValuePairs($message);
 		$data = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public, $special);
@@ -137,7 +155,10 @@ class wotkit_client {
 		return $data;
 	}
 	
+	
+	
 //Sensor Functions
+
 	public function createSensor($data_array){
 		//required fields name, longname, desc
 		$this->expected_http_code = 201;
@@ -167,7 +188,9 @@ class wotkit_client {
 		
 	}
 	
-	
+	/* getSensors()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false) 
 	{	$this->expected_http_code = 200;
 	
@@ -238,8 +261,11 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+
+	
 	
 //Sensor Subscription Functions
+
 	public function getSubscribedSensors (){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
@@ -267,7 +293,13 @@ class wotkit_client {
 		return $data;
 	}
 
+	
+	
 //Sensor Field Functions
+
+	/* getSensorFields()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getSensorFields ($sensor=null, $field=null, $public){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
@@ -317,8 +349,11 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
+
+	
 	
 //Aggregated Sensor Data
+
 	  public function getAggregatedData ($params){
 	//public function getSensors($scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL,
 	//						     $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL,
@@ -347,7 +382,12 @@ class wotkit_client {
 	}
 
 	
+	
 //Sensor Data Functions
+
+	/* getSensorData()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getSensorData ($sensor, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
@@ -415,8 +455,10 @@ class wotkit_client {
 		$data = json_decode($data, true);
 		return $data;
 	}
-
 	
+	/* getRawSensorData()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
@@ -438,6 +480,9 @@ class wotkit_client {
 		return $data;
 	}
 	
+	/* getFormattedSensorData()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getFormattedSensorData($sensor, $tq=NULL, $reqID=NULL, $out=NULL, $outfile=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
@@ -471,8 +516,12 @@ class wotkit_client {
 		
 		return $data;
 	}
-
+	
+	
+	
 //Users	
+//**must have ROLE_ADMIN credentials to use these functions
+
 	public function getUsers($user=NULL, $text=NULL, $reverse=NULL, $offset=NULL, $limit=NULL) 
 	{	$this->expected_http_code = 200;
 	
@@ -531,7 +580,13 @@ class wotkit_client {
 		return $data;
 	}
 
+
+
+	
+	
 //News
+//**does not require any credentials
+
 	public function getNews(){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
@@ -541,7 +596,11 @@ class wotkit_client {
 		return $data;
 	}
 
+	
+	
 //Stats
+//**does not require any credentials
+
 	public function getStats(){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
@@ -549,9 +608,15 @@ class wotkit_client {
 		$data = $this->processRequest( "stats", "GET", null, 1, true);
 		$data = json_decode($data, true);
 		return $data;
-	}
+	}	
+
+	
 	
 //Tags
+
+	/* getTags()
+	 * public = true  => do not supply any credentials
+	 */
 	public function getTags($scope=NULL, $private=NULL, $text=NULL, $active=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
@@ -559,13 +624,17 @@ class wotkit_client {
 						"offset" => $offset, "limit" => $limit, "location" => $this->NWSELocationBox($location) );
 		
 		$url_string = "tags?".$this->ArraytoNameValuePairs($params);
-		echo $url_string;
+
 		$data = $this->processRequest($url_string, "GET", null, false, $public);
 		$data = json_decode($data, true);
 		return $data;
 	}	
 	
-//Basic Request
+
+	
+/*
+ *Basic Curl Request
+ */
 	//@param str  $url
 	//				task specific url ending
 	//@param str  $request
@@ -573,6 +642,10 @@ class wotkit_client {
 	//@param str  $data
 	//@param bool $isJson 
 	//				whether input $data is JSON string 
+	//@param bool $public 
+	//				whether not to provide credentials
+	//@param bool $special 
+	//				whether to provide a different user's credentials
 	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special=NULL){
 	
 		//Clearing old data
@@ -603,11 +676,11 @@ class wotkit_client {
 			}
 		} else{
 			if ($special){
-				echo("Different user\n");
+				echo("Different user \n");
 				curl_setopt($ch, CURLOPT_USERPWD,"sensetecnic:aMUSEment2");
 			}
 			else{
-				echo("Public, no authentication\n");
+				echo("Public, no authentication \n");
 			}
 		}
 		
@@ -652,7 +725,9 @@ class wotkit_client {
 		return $this->response;
 	}
 	
-//Private Helper Functions
+/*
+ *Private Helper Functions
+ */
 	private function ArraytoNameValuePairs($params){
 		
 		$started = false;
@@ -751,8 +826,5 @@ class wotkit_client {
 		$location_box = $location[0].",".$location[1].":".$location[2].",".$location[3];
 		return $location_box;
 	}
-	
-
-	
 }
 ?>
