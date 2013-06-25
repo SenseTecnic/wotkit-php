@@ -104,6 +104,7 @@ $failures = 0;
 	$start_time = strtotime("7 January 2013 14:00")*1000;
 	$end_time = strtotime("8 January 2013 13:00")*1000;	
 	$location_vancouver =  array(50,-124,48,-122); //N,W,S,E
+	$location_edmonton = array(54,-114,52,-113);//N,W,S,E
 	$location_winnipeg =  array(50,-98,48,-96); //N,W,S,E
 	$location_kilkenny =  array(53,-8,52,-7); //N,W,S,E
 	$location_invalid_ns =  array(1,4,3,2); //N,W,S,E
@@ -1570,8 +1571,8 @@ echo nl2br("\n\n [*****TESTING TAGS******] \n");
 	
 #Query location tags (private sensors)
 	$expected = 3;
-	echo nl2br("\n\n [QUERY LOCATION=Winnepeg tags] \n");
-	$data = $wotkit_client->getTags(null, null, null, null, null, null, $location_winnepeg );
+	echo nl2br("\n\n [QUERY LOCATION=Winnipeg tags] \n");
+	$data = $wotkit_client->getTags(null, null, null, null, null, null, $location_winnipeg );
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);
 	
@@ -1626,8 +1627,8 @@ echo nl2br("\n\n [*****TESTING TAGS******] \n");
 	
 #Query location tags, with no credentials (private sensors)
 	$expected = 0;
-	echo nl2br("\n\n [QUERY LOCATION=Winnepeg tags, with NO CREDENTIALS -- a private sensor exists] \n");
-	$data = $wotkit_client->getTags(null, null, null, null, null, null, $location_winnepeg, $public);
+	echo nl2br("\n\n [QUERY LOCATION=Winnipeg tags, with NO CREDENTIALS -- a private sensor exists] \n");
+	$data = $wotkit_client->getTags(null, null, null, null, null, null, $location_winnipeg, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected);
 	
