@@ -664,10 +664,12 @@ echo nl2br("\n\n [*****TESTING SENSOR DATA******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status, $expected, true);
 	
-#Update 2nd piece of data from 'api-data-test-3'
+#Update 2nd piece of data from 'api-data-test-3' (using timestamp as long)
 #Update 2nd piece of data from existing sensor
-	echo nl2br("\n\n [UPDATE 2nd data piece from '".$existing_data_sensor[2]."'] \n");
+	echo nl2br("\n\n [UPDATE 2nd data piece from '".$existing_data_sensor[2]."' (using timestamp as long)] \n");
+	
 	$saved_response = json_decode($wotkit_client->response, true);
+	
 	$updated_sensor_data = array(array("timestamp" =>$saved_response[1][timestamp],
 	 "value"=>100,
 	 "lat"=>100,
@@ -678,6 +680,118 @@ echo nl2br("\n\n [*****TESTING SENSOR DATA******] \n");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayOutput ($data, $test_status,NULL);
 	//$message="Sensor updated";
+
+#Query data from existing sensor
+	echo nl2br("\n\n [QUERY data from '".$existing_data_sensor[2]."'] \n");
+	$expected = 3;
+	$data = $wotkit_client->getSensorData($existing_data_sensor[2]);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected, true);	
+	
+#Send new piece of data	
+    echo nl2br("\n\n [Send new piece of data to '".$existing_data_sensor[2]."'] \n"); 
+	$old_timezone  = date_default_timezone_get();
+	date_default_timezone_set('UTC');
+	$timestamp_number = time()*1000;
+	$sensor_data = array(
+	 "timestamp" =>$timestamp_number,
+	 "value"=>100,
+	 "lat"=>100,
+	 "lng"=>100,
+	 "message"=>"new data");
+	$data = $wotkit_client->sendNonStandardSensorData($existing_data_sensor[2], $sensor_data);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status,null);	
+
+#Query data from existing sensor
+	echo nl2br("\n\n [QUERY data from '".$existing_data_sensor[2]."'] \n");
+	$expected = 4;
+	$data = $wotkit_client->getSensorData($existing_data_sensor[2]);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected, true);	
+	
+#Update new piece of data from 'api-data-test-3' (using timestamp as string)
+#Update new piece of data from existing sensor
+	echo nl2br("\n\n [UPDATE new data piece from '".$existing_data_sensor[2]."' (using timestamp as string)] \n");
+	$timestamp_string = date('o-m-d!G:i:s', $timestamp_number/1000);
+	$timestamp_string = str_replace('!', 'T', $timestamp_string);
+	$timestamp_string .= ".000z";
+	$updated_sensor_data = array(array("timestamp" =>$timestamp_string,
+	 "value"=>600,
+	 "lat"=>600,
+	 "lng"=>600,
+	 "message"=>"updated new data")
+	 );
+	$data = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status,NULL);
+	//$message="Sensor updated";	
+
+#Query data from existing sensor
+	echo nl2br("\n\n [QUERY data from '".$existing_data_sensor[2]."'] \n");
+	$expected = 4;
+	$data = $wotkit_client->getSensorData($existing_data_sensor[2]);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected, true);	
+
+#Delete new data from 'api-data-test-3'
+#Delete new data from existing sensor
+	echo nl2br("\n\n [DELETE new data from '".$existing_data_sensor[2]."'] \n");
+	$data = $wotkit_client->deleteSensorData($existing_data_sensor[2], $timestamp_number);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status,NULL);
+	$message="Sensor data deleted";	
+
+#Query data from existing sensor
+	echo nl2br("\n\n [QUERY data from '".$existing_data_sensor[2]."'] \n");
+	$expected = 3;
+	$data = $wotkit_client->getSensorData($existing_data_sensor[2]);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayOutput ($data, $test_status, $expected, true);	
+
+date_default_timezone_set($old_timezone);
+
+#Update 2nd piece of data from 'api-data-test-3' with INVALID DATA (string in numerical field)
+#Update 2nd piece of data from existing sensor with INVALID DATA 
+	echo nl2br("\n\n [UPDATE 2nd data piece from '".$existing_data_sensor[2]."' with INVALID DATA (string in numerical field)] \n");
+	$updated_sensor_data = array(array("timestamp" =>$saved_response[1][timestamp],
+	 "value"=>"100string",
+	 "lat"=>"100string",
+	 "lng"=>"100string",
+	 "message"=>"updated fields")
+	 );
+	$data = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	displayOutput ($data, $test_status,NULL);
+	//$message="Sensor updated";
+	
+#Update 2nd piece of data from 'api-data-test-3' with INVALID DATA (missing required field)
+#Update 2nd piece of data from existing sensor with INVALID DATA
+	echo nl2br("\n\n [UPDATE 2nd data piece from '".$existing_data_sensor[2]."' with INVALID DATA (missing required field)] \n");
+	$updated_sensor_data = array(array("timestamp" =>$saved_response[1][timestamp],
+	 "lat"=>100,
+	 "lng"=>100,
+	 "message"=>"updated fields")
+	 );
+	$data = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	displayOutput ($data, $test_status,NULL);
+	//$message="Sensor updated";	
+
+#Update 2nd piece of data from 'api-data-test-3' with INVALID DATA (data from future)
+#Update 2nd piece of data from existing sensor with INVALID DATA
+	echo nl2br("\n\n [UPDATE 2nd data piece from '".$existing_data_sensor[2]."' with INVALID DATA (data from future)] \n");
+	$updated_sensor_data = array(array("timestamp" => time()*1000 + 60000,
+	 "value"=>100,
+	 "lat"=>100,
+	 "lng"=>100,
+	 "message"=>"updated fields")
+	 );
+	$data = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	displayOutput ($data, $test_status,NULL);
+	//$message="Sensor updated";	
+	
 	
 #Query data from 'api-data-test-3'
 #Query data from existing sensor
