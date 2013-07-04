@@ -25,7 +25,10 @@ FILES:
 TESTING:
 
 1. Set configuration parameters in "wotkit_clientConfig.php"
-2. Run "wotkit_ClientOauth2Testing.php" using Chrome or IE*
+2. Run "wotkit_ClientOauth2Testing.php" using Chrome or IE* to test with Oauth
+   Run "wotkit_clientTestCases.php" to test with keys
+
+Note: Any RED, open tests have failed. Any BLUE tests need to visually checked.
 
 
 
