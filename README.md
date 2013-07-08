@@ -19,6 +19,7 @@ FILES:
   
 4. wotkit_ClientOauth2Testing.php
   - run this file for Oauth2 testing 
+  - NOTE: ANY FUNCTION RUN "AS ADMIN" is using a key NOT an access token	
   - do NOT run this file with Firefox
   
 

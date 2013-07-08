@@ -4,13 +4,13 @@
 <link href="lib/css/bootstrap.min.css" rel="stylesheet" media="screen" />
 <link href="lib/css/custom.css" rel="stylesheet"/>
 <body>
-
-
-
+<script src="http://code.jquery.com/jquery.js"></script>
+<script src="lib/js/bootstrap.min.js"></script>
 <?php
 /*
  * Run this script for General Key Based Testing
  * (assumes newly initilized database)
+ * NOTE: any function run "as admin" uses a key NOT an access token
  *
  */
 
@@ -53,7 +53,8 @@ $test_count = 0;
 	//-currently able to update sensor name
 	//-no error when trying to update owner	
 	$new_sensor_input = array(
-	"private"=>false, 
+	//"private"=>false, 
+	"visibility"=>"PUBLIC",
 	"name"=>$generic_sensor, 
 	"description"=>"api client test sensor desc", 
 	"longName"=>"api client test sensor long", 
@@ -87,7 +88,8 @@ $test_count = 0;
 	 "description"=>$unowned_sensor_full);
 	 
 	$additional_sensor_input = array(
-	"private"=>"false", 
+	//"private"=>false, 
+	"visibility"=>"PUBLIC",
 	"name"=>$additional_generic_sensor, 
 	"description"=>"api client test sensor additional desc", 
 	"longName"=>"api client test sensor additional long", 
@@ -103,7 +105,7 @@ $test_count = 0;
 	//can include any fake fields and sensor will NOT be invalid
 
 //SENSOR FIELDS	
-	$invalid_field_required = array ("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
+	$invalid_field_required = array("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
 	$invalid_field_default = array("name"=>"value", "type"=>"STRING");
 	$new_field = array ("required"=>true,"name"=>"testfield", "longName"=>"Test Field", "type"=>"NUMBER",  "units"=>"mm");	
 	$updated_field = array ("required"=>false, "name"=>"testfield","longName"=>"Updated Test Field", "type"=>"STRING","units"=>"cm");	
@@ -161,11 +163,45 @@ $test_count = 0;
 	"firstname" => "Firstname Changed",
 	"email" => "new_email@address.com",
 	"password" => "password2");
+
+//ORGANIZATIONS
+	$new_org_mandatory = array(
+	"name"=>"test-organization", 
+	"longName"=>"First Test Organization");
+	$new_org_invalid_name = array(
+	"name"=>"0", 
+	"longName"=>"Invalid Organization");
+	$new_org_missing_longname = array("name"=>"invalid-organization");
+	$updated_org_name = array(
+	"name"=>"updated-test-organiztion", 
+	"longName"=>"First Test Organization Updated");	
+	$updated_org_all = array(
+	"longName"=>"First Test Organization Updated", 
+	"description"=>"Updated with description", 
+	"imageUrl"=>"placeholder");
+	
+	$new_org_all = array(
+	"name"=>"test-organization-2", 
+	"longName"=>"Second Test Organization",
+	"description"=>"Second Test Organization Description", 
+	"imageUrl"=>"placeholder");					
+	$updated_org_longName = array("longName"=>"ONLY FIELD NOT NULL");
+	
+	$added_members = array('tester', 'tester-admin');
+	
+	$org_sensor_input = array(
+	"organization"=>$new_org_all['name'],
+	"visibility"=>"ORGANIZATION",
+	"name"=>"org-sensor", 
+	"description"=>"sensor for org: ".$new_org_all['name'], 
+	"longName"=>"org sensor", 
+	"latitude"=>44, 
+	"longitude"=>66);
 	
 //Table of Contents	
 	$toc_keys = array('Sensors', 'Subscriptions', 'Data', 'Raw Data', 'Formatted Data', 
 	                  'Querying Sensors', 'Aggregate Sensor Data', 'Actuators', 'Users', 'News', 
-					  'Stats', 'Tags', 'Public Functions', 'Results');
+					  'Stats', 'Tags', 'Organizations', 'Public Functions', 'Results');
 
 //---------------------------------------------------------------------------------------//
 
@@ -175,12 +211,12 @@ foreach ($toc_keys as $label){
 	echo '<a href="#'.$label.'">'.$label.'</a> ** ';
 }
 echo '</div>';
+
 /**
  * Begin Tests
  **/
 
 //SENSORS
-
 
 printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 
@@ -216,7 +252,8 @@ printLabel(null,"....testing creation of multiple sensors.......", true);
 	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
+	$problem = checkArraysEqual($response['data'], $new_sensor_input); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Delete 'api-client-test-sensor'
 #Delete a SINGLE sensor that DOES exist
@@ -230,7 +267,9 @@ printLabel(null,"....testing creation of multiple sensors.......", true);
 	$title = "\n\n [QUERY sensor: '".$additional_generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($additional_generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
+	//$problem = checkArraysEqual($response['data'], $additional_sensor_input); 
+	//displayTestResults ($problem, false, $title, $test_status, $response);
+	displayTestResults (null, true, $title, $test_status, $response);
 
 #Delete 'api-client-test-sensor_additional'
 #Delete a SINGLE sensor that DOES exist
@@ -263,7 +302,8 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
+	$problem = checkArraysEqual($response['data'],$new_sensor_input); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 	
 //!!!!!!!CAN change sensor name	
@@ -486,7 +526,8 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 	$expected = 3;
 	$response = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response, $expected);
+	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 	
 #Subscribe to a non-private sensor
 	$title = "\n\n [SUBSCRIBE to sensor: '".$existing_data_sensor[2]."']\n";
@@ -513,7 +554,8 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 	$expected = 4;
 	$response = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
+	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $existing_data_sensor[2], $unowned_sensor_short));
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Unsubscribe sensor	
 	$title = "\n\n [UNSUBSCRIBE from sensor: '".$existing_data_sensor[2]."']\n";
@@ -534,7 +576,7 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 	$response = $wotkit_client->getSubscribedSensors();
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 	
 
@@ -1062,14 +1104,14 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[1]);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response, $expected, true);
+	displayTestResults (null, true, $title, $test_status, $response, $expected, true);
 	
 #Querying all raw data
 	$title = "\n\n [Querying all from sensor: '".$existing_data_sensor[0]."'] \n";
 	$expected = 4;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0]);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response, $expected, true);	
+	displayTestResults (null, true, $title, $test_status, $response, $expected, true);	
 	$saved_data = $response['data'];
 	
 #Querying raw data START END
@@ -1409,7 +1451,7 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	$expected = 1;
 	$response = $wotkit_client->subscribeActuator($actuator_name);
 	$sub_id = $response["data"]["subscription"];	
-	$response = $wotkit_client->sendActuator($actuator_name_full, $actuator_message, $public, true);
+	$response = $wotkit_client->sendActuator($actuator_name_full, $actuator_message, $public, "other");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 	
@@ -1439,121 +1481,123 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 printLabel($toc_keys[8], "[*****TESTING USERS******]");	
 
 #Create invalid username
-	$title = "\n\n [CREATE user with invalid name :'".$invalid_user_name."'] \n";
-	$response = $wotkit_client->createUser($invalid_name_user_input);
+	$title = "\n\n [CREATE user with invalid name :'".$invalid_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->createUser("admin", $invalid_name_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(500);
 	$problem = checkError($response['data'], "'username': rejected value");
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create invalid user with missing property
-	$title = "\n\n [CREATE user with missing properties] \n";
-	$response = $wotkit_client->createUser($missing_property_user_input);
+	$title = "\n\n [CREATE user with missing properties, as ADMIN] \n";
+	$response = $wotkit_client->createUser("admin", $missing_property_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(500);
 	$problem = checkError($response['data'], "'lastname': rejected value");
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create user 
-	$title = "\n\n [CREATE user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->createUser($new_user_input);
+	$title = "\n\n [CREATE user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->createUser("admin", $new_user_input);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 	
 #Create existing user 
-	$title = "\n\n [CREATE EXISTING user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->createUser($new_user_input);
+	$title = "\n\n [CREATE EXISTING user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->createUser("admin", $new_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(409);
 	displayTestResults (null, false, $title, $test_status, $response);
 	
 #Query existing user 
-	$title = "\n\n [QUERY existing user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->getUsers($new_user_name);
+	$title = "\n\n [QUERY existing user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->getUsers("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkArraysEqual($response['data'], $new_user_input);
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Update existing user 
-	$title = "\n\n [UPDATE existing user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->updateUser($new_user_name, $updated_user_input);
+	$title = "\n\n [UPDATE existing user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->updateUser("admin", $new_user_name, $updated_user_input);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 	
 #Query existing user 
-	$title = "\n\n [QUERY existing user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->getUsers($new_user_name);
+	$title = "\n\n [QUERY existing user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->getUsers("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkArraysEqual($response['data'], $updated_user_input);
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	$saved_data = $response['data'];
 	
 #Update existing user with invalid data 
-	$title = "\n\n [UPDATE username of existing user: '".$new_user_name."' -- not allowed] \n";
-	$response = $wotkit_client->updateUser($new_user_name, $invalid_updated_user_input);
+	$title = "\n\n [UPDATE username of existing user: '".$new_user_name."', as ADMIN -- not allowed] \n";
+	$response = $wotkit_client->updateUser("admin", $new_user_name, $invalid_updated_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(400);
 	$problem = checkError($response['data'], 'Extraneous field', 'Cannot change username');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Query existing user 
-	$title = "\n\n [QUERY existing user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->getUsers($new_user_name);
+	$title = "\n\n [QUERY existing user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->getUsers("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkArraysEqual($response['data'], $saved_data);
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Query all users with "api" in name
-	$title = "\n\n [QUERY users with TEXT='api'] \n";
-	$expected = 1;
-	$response = $wotkit_client->getUsers(null, "api");
+	$title = "\n\n [QUERY users with TEXT='api', as ADMIN] \n";
+	$expected = 2;
+	$response = $wotkit_client->getUsers("admin", null, "api");
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = !($response['data'][0]["username"] == "tester");
+	$problem = !($response['data'][0]["username"] == "tester-admin");
+	if (!$problem)
+		$problem = !($response['data'][1]["username"] == "tester");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);		
 	
 #Query all users REVERSE = true
-	$title = "\n\n [QUERY existing users from oldest to newest, REVERSE=true, LIMIT=6] \n";
-	$expected = 6;
-	$response = $wotkit_client->getUsers(null, null, true, null, 6);
+	$title = "\n\n [QUERY existing users from oldest to newest, REVERSE=true, LIMIT=7, as ADMIN] \n";
+	$expected = 7;
+	$response = $wotkit_client->getUsers("admin", null, null, true, null, 7);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = !($response['data'][0]['id'] < $response['data'][5]['id']);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 	
 #Query all users REVERSE = false
-	$title = "\n\n [QUERY existing users from oldest to newest, REVERSE=false, LIMIT=6] \n";
-	$expected = 6;
-	$response = $wotkit_client->getUsers(null, null, false, null, 6);
+	$title = "\n\n [QUERY existing users from oldest to newest, REVERSE=false, LIMIT=7, as ADMIN] \n";
+	$expected = 7;
+	$response = $wotkit_client->getUsers("admin", null, null, false, null, 7);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = !($response['data'][0]['id'] > $response['data'][5]['id']);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 	
 #Query all users LIMIT 2 
-	$title = "\n\n [QUERY all users LIMIT=2] \n";
+	$title = "\n\n [QUERY all users LIMIT=2, as ADMIN] \n";
 	$expected = 2;
-	$response = $wotkit_client->getUsers(null, null, null, null, 2);
+	$response = $wotkit_client->getUsers("admin", null, null, null, null, 2);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected);	
 	
 #Query all users OFFSET 5 LIMIT 2 
-	$title = "\n\n [QUERY all users OFFSET=5 & LIMIT=2] \n";
+	$title = "\n\n [QUERY all users OFFSET=3 & LIMIT=2, as ADMIN] \n";
 	$expected = 2;
-	$response = $wotkit_client->getUsers(null, null, null, 5, 2);
+	$response = $wotkit_client->getUsers("admin", null, null, null, 3, 2);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected);	
 	
 #Delete user 'new-user-api-testing'
 #Delete existing user 
-	$title = "\n\n [DELETE EXISTING user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->deleteUser($new_user_name);
+	$title = "\n\n [DELETE EXISTING user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->deleteUser("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);	
 	
 #Delete non-existent user 'new-user-api-testing'
-	$title = "\n\n [DELETE NON-EXISTENT user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->deleteUser($new_user_name);
+	$title = "\n\n [DELETE NON-EXISTENT user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->deleteUser("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], 'No user', 'No user');
 	displayTestResults ($problem, false, $title, $test_status, $response);	
 	
 #Query non-existent user 
-	$title = "\n\n [QUERY NON-EXISTENT user: '".$new_user_name."'] \n";
-	$response = $wotkit_client->getUsers($new_user_name);
+	$title = "\n\n [QUERY NON-EXISTENT user: '".$new_user_name."', as ADMIN] \n";
+	$response = $wotkit_client->getUsers("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], 'No user', 'No user');
 	displayTestResults ($problem, false, $title, $test_status, $response);	
@@ -1587,7 +1631,7 @@ printLabel($toc_keys[10], "[*****TESTING STATS******]");
 printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 
 #Query all tags
-	$title = "\n\n [QUERY ALL tags -- assumes returned value is the correct number of tags] \n";
+	$title = "\n\n [QUERY ALL tags (ASSUMES returned value is the correct number of tags)] \n";
 	$response = $wotkit_client->getTags("all");
 	$all_tags = count($response['data']);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1741,34 +1785,279 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);
 
 
+
+//Organizations	
+printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
+
+#Query all organizations
+	$expected = 1;
+	$title = "[QUERY all organizations]";
+	$response = $wotkit_client->getOrganizations(null);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors($response['data'][0]['name'], array('sensetecnic'));
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+
+#Create new organization using mandatory fields 
+	$title = "[CREATE new organization: '".$new_org_mandatory['name']."' (using mandatory fields), as ADMIN]";
+	$response = $wotkit_client->createOrganization("admin", $new_org_mandatory);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Query existing organization
+	$expected = 3;
+	$title = "\n\n [QUERY organization: '".$new_org_mandatory['name']."'] \n";
+	$response = $wotkit_client->getOrganizations(null, $new_org_mandatory['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'], $new_org_mandatory);
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+
+#Create EXISTING organization
+	$title = "[CREATE existing organization: '".$new_org_mandatory['name']."', as ADMIN]";
+	$response = $wotkit_client->createOrganization("admin", $new_org_mandatory);
+	$test_status = $wotkit_client->checkHTTPcode(409);
+	$problem = checkError($response["data"], "already exists", "already exists");
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Create organization with invalid name
+	$title = "\n\n [CREATE new organization INVALID NAME, as ADMIN] \n";
+	$response = $wotkit_client->createOrganization("admin", $new_org_invalid_name);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response["data"], "invalid name");
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Create organization with missing required field, longName
+	$title = "\n\n [CREATE new organization MISSING required field (longName), as ADMIN] \n";
+	$response = $wotkit_client->createOrganization("admin", $new_org_missing_longname);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response["data"], "invalid longName");
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Query all organizations
+	$expected = 2;
+	$title = "\n\n [QUERY all organizations] \n";
+	$response = $wotkit_client->getOrganizations();
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'][0], $new_org_mandatory);
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+
+#Update non-existent organization 
+	$title = "\n\n [UPDATE non-existent organization, as ADMIN] \n";
+	$response = $wotkit_client->updateOrganization("admin", 'not-real-org', $updated_org_all);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response["data"], "No organization", "No organization");
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Update existing organization NAME
+	$title = "\n\n [UPDATE PROTECTED field (name) of existing organization: '".$new_org_mandatory['name']."', as ADMIN] \n";
+	$response = $wotkit_client->updateOrganization("admin", $new_org_mandatory['name'], $updated_org_name);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'Extraneous', 'Cannot change the field "name"');
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Update existing organization
+	$title = "\n\n [UPDATE all fields of existing organization: '".$new_org_mandatory['name']."', as ADMIN] \n";
+	$response = $wotkit_client->updateOrganization("admin", $new_org_mandatory['name'], $updated_org_all);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Query organization	
+	$expected = 5;
+	$title = "\n\n [QUERY organization: '".$new_org_mandatory['name']."'] \n";
+	$response = $wotkit_client->getOrganizations(null, $new_org_mandatory['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'], $updated_org_all);
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);					  
+
+#Create new organization	
+	$title = "\n\n [CREATE new organization: '".$new_org_all['name']."' (using all fields), as ADMIN] \n";
+	$response = $wotkit_client->createOrganization("admin", $new_org_all);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Query organization					  						  
+	$expected = 5;
+	$title = "\n\n [QUERY organization: '".$new_org_all['name']."'] \n";
+	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'], $new_org_all);
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
+
+#Update existing organization longName only
+	$title = "\n\n [UPDATE longName of existing organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->updateOrganization("admin", $new_org_all['name'], $updated_org_longName);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Query organization	
+	$expected = 3;
+	$title = "\n\n [QUERY organization: '".$new_org_all['name']."'] \n";
+	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'], $updated_org_longName);
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+	
+#List members
+	$expected = 0;
+	$title = "\n\n [GET MEMBERS of organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->getOrganizationMembers("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response, $expected, true);
+
+#Add members
+	$title = "\n\n [ADD MEMBERS to organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->addOrganizationMembers("admin", $new_org_all['name'], $added_members);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#List memebers
+	$expected = 2;
+	$title = "\n\n [GET MEMBERS of organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->getOrganizationMembers("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !(($response['data'][0]['username'] == $added_members[0]) && ($response['data'][1]['username'] == $added_members[1]));
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+
+#Remove members
+	$title = "\n\n [REMOVE MEMBER 'tester' from organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->removeOrganizationMembers("admin", $new_org_all['name'], array($added_members[1]));
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#List members
+	$expected = 1;
+	$title = "\n\n [GET MEMBERS of organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->getOrganizationMembers("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !( $response['data'][0]['username'] == $added_members[0] );
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);				
+
+#Remove member
+	$title = "\n\n [REMOVE NON-EXISTENT MEMBER 'tester' from organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->removeOrganizationMembers("admin", $new_org_all['name'], array($added_members[1]));
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#List members
+	$expected = 1;
+	$title = "\n\n [GET MEMBERS of organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->getOrganizationMembers("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !( $response['data'][0]['username'] == $added_members[0] );
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
+	
+#Create new sensor with org visibility
+	$title = "\n\n [CREATE sensor: '".$org_sensor_input['name']."' with organzition: '".$new_org_all['name']."'] \n";
+	$response = $wotkit_client->createSensor($org_sensor_input);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);	
+
+#Query sensors by org
+	$expected = 1;
+	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name']."']\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'], $org_sensor_input);
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+
+#Query sensors by org, with NO CREDENTIALS
+	$expected = 0;
+	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name']."', with NO CREDENTIALS]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name'], true);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response, $expected, true);	
+
+#Delete sensor with org visibility
+	$title = "\n\n [DELETE sensor: '".$org_sensor_input['name']."'] \n";
+	$response = $wotkit_client->deleteSensor($org_sensor_input['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+#Query all organizations 
+	$expected = 3;
+	$title = "\n\n [QUERY all organizations] \n";
+	$response = $wotkit_client->getOrganizations();
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, true, $title, $test_status, $response, $expected);
+
+#Query organizations by TEXT
+	$expected = 2;
+	$title = "\n\n [QUERY organizations with text 'test'] \n";
+	$response = $wotkit_client->getOrganizations(null, null, 'test');
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !(($response['data'][0]['name'] == $new_org_all['name'])&&($response['data'][1]['name'] == $new_org_mandatory['name']));
+	displayTestResults($problem, false, $title, $test_status, $response, $expected);
+
+#Query organizations by offset
+	$expected = 2;
+	$title = "\n\n [QUERY organizations with OFFSET=1] \n";
+	$response = $wotkit_client->getOrganizations(null, null, null, 1);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response, $expected);
+
+#Query organizations by limit
+	$expected = 1;
+	$title = "\n\n [QUERY organizations with LIMIT=1] \n";
+	$response = $wotkit_client->getOrganizations(null, null, null, null, 1);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response, $expected);				
+				
+#Delete organization with memebers
+	$title = "\n\n [DELETE no member organization: '".$new_org_mandatory['name']."', as ADMIN] \n";
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_mandatory['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Delete organization without members
+	$title = "\n\n [DELETE 1 member organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Delete non-existent organization
+	$title = "\n\n [DELETE NON-EXISTENT organization: '".$new_org_all['name']."', as ADMIN] \n";
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], "No organization", "No organization");
+	displayTestResults($problem, false, $title, $test_status, $response);
+
+#Query non-existent organization
+	$expected = 1;
+	$title = "\n\n [QUERY NON-EXISTENT organization: '".$new_org_all['name']."'] \n";
+	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], "No organization", "No organization");
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+
+
+
 //PUBLIC FUNCTIONS
-printLabel($toc_keys[12], "[*****TESTING PUBLIC FUNCTIONS******]");	
+printLabel($toc_keys[13], "[*****TESTING PUBLIC FUNCTIONS******]");	
 
 $public = true;
 
 #Query for multiple sensors
 	$title = "\n\n [QUERY PUBLIC sensors, LIMIT=5 (with NO CREDENTIALS)]\n";
 	$expected = 5;
-	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, $public );
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $expected);
 
 #Query 'api-client-test-sensor'
 #Query a SINGLE sensor that DOES exist
 	$title = "\n\n [QUERY PUBLIC, existing sensor: '".$existing_data_sensor_full[0]."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($existing_data_sensor_full[0], null, null, null, null, null, null, null, null, $public );
+	$response = $wotkit_client->getSensors($existing_data_sensor_full[0], null, null, null, null, null, null, null, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
 	
 #Query a single, PRIVATE sensor that does exist
 	$title = "\n\n [QUERY PRIVATE, existing sensor: '".$private_unowned_sensor."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($private_unowned_sensor, null, null, null, null, null, null, null, null, $public );
+	$response = $wotkit_client->getSensors($private_unowned_sensor, null, null, null, null, null, null, null, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayTestResults(null, false, $title, $test_status, $response);		
 
 #Query a single, public sensor that DOES NOT exist
 	$title = "\n\n [QUERY NOT-EXISTENT sensor: '".$invalid_sensor_input["name"]."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, $public );
+	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], 'No sensor');
 	displayTestResults($problem, false, $title, $test_status, $response);	
@@ -1811,12 +2100,28 @@ $public = true;
 	$title = "\n\n [QUERY fields from PRIVATE sensor: '".$existing_data_sensor_full[2]."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensorFields ($existing_data_sensor_full[2], null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(401);
-	displayTestResults(null, false, $title, $test_status, $response);	
+	displayTestResults(null, false, $title, $test_status, $response);
+
+#Query organization	WITHOUT CREDENTIALS
+	$expected = 1;
+	$title = "\n\n [QUERY all organizations, with NO CREDENTIALS] \n";
+	$response = $wotkit_client->getOrganizations(null, null, null, null, null, $public);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, false, $title, $test_status, $response, $expected, true);
+	
+#Query organization	WITHOUT CREDENTIALS
+	$expected = 5;
+	$org = 'sensetecnic';
+	$title = "\n\n [QUERY all organization: '".$org."', with NO CREDENTIALS] \n";
+	$response = $wotkit_client->getOrganizations(null, $org, null, null, null, $public);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !(($response['data']['name'] == $org) && ($response['data']['id'] == 1));
+	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
+
 
 	
-	
 //RESULTS		
-printLabel($toc_keys[13], "[*****RESULTS******] ");
+printLabel($toc_keys[14], "[*****RESULTS******] ");
 if ( $failures === 0 )
 	echo "ALL TESTS PASSED" ;	
 else
@@ -1860,7 +2165,7 @@ echo '</div>';
 		echo '<div class="accordion" id="accordian"'.$test_count.'>';
 		echo '<div class="accordion-group">';
 		echo '<div class="accordion-heading">';
-		
+	
 		if ( $pass_code && $pass_expected && !$problem ){
 			if ($visual_check){
 				echo '<a class="accordion-toggle btn btn-info" data-toggle="collapse" data-parent="#accordion'.$test_count.'" href="#collapse'.$test_count.'">';
@@ -2026,7 +2331,6 @@ echo '</div>';
 	}
 
 ?>
-<script src="http://code.jquery.com/jquery.js"></script>
-<script src="lib/js/bootstrap.min.js"></script>
+
 </body>
 </html>

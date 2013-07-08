@@ -6,6 +6,10 @@ class wotkit_client {
 	private $key_id = "3bfeb222062cb0a6";
 	private $key_password = "894a1b762806471f";
 	
+	//Uses a set key in database with "tester-admin" as owner
+	private $admin_key_id = "9ae8fee004d7385c";
+	private $admin_key_password = "27cb43c11491929b";
+	
 	//Uses Oauth2
 	private $client_id;
 	private $client_secret;
@@ -64,7 +68,6 @@ class wotkit_client {
 					);
 			
 			$data = $this->ArraytoNameValuePairs ($params);
-	
 			$this->accessToken = "setting";
 			$response = $this->processRequest($url, "POST", $data, false);
 			$json = json_decode($response['data']);
@@ -83,24 +86,19 @@ class wotkit_client {
  */
 	public function checkHTTPcode( $expected_http_code=NULL, $message=NULL )
 	{
-		if( $expected_http_code == NULL )
-		{	
+		if( $expected_http_code == NULL )	
 			$expected_http_code = $this->expected_http_code;
-		}
-		if ( $this->response_info[http_code] == $expected_http_code )
-		{
-			$response ='<b>PASS</b> ';
-		}
-		else {
-			$response = '<font color="red">FAIL</font> ';
-		};
 		
+		if ( $this->response_info[http_code] == $expected_http_code )
+			$response ='<b>PASS</b> ';
+		else 
+			$response = '<font color="red">FAIL</font> ';
+			
 		$response .=" - HTTP ".$this->response_info[http_code];
 		
-		if ( $message != NULL ){
+		if ( $message != NULL )
 			$response.=" ".$message;
-		}
-		
+	
 		return $response;
 	}
 	
@@ -124,7 +122,8 @@ class wotkit_client {
 	public function subscribeActuator($sensor){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
-		$dummy_data=1; //dummy data becuase processRequest() wants all POSTS/PUTS to have data 
+		
+		$dummy_data = 1; //dummy data becuase processRequest() wants all POSTS/PUTS to have data 
 		$response = $this->processRequest("control/sub/".$sensor, "POST", $dummy_data, true);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -132,19 +131,22 @@ class wotkit_client {
 	
 	/* sendActuator()
 	 * public = true  => do not supply any credentials
-	 * special = true => supply credentials for different user
+	 * special_user (string) => supply credentials for different user (key or basic auth)
 	 */
-	public function sendActuator($sensor, $message, $public=false, $special=false){
+	public function sendActuator($sensor, $message, $public=false, $special_user=null){
 		$this->expected_http_code = 200; //documentation said 204, but always get 200....
 		$this->hasParameters = false;
+		
 		$message = $this->ArraytoNameValuePairs($message);
-		$response = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public, $special);
+		$response = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public, $special_user);
+		//do not JSON decode to save time
 		return $response;
 	}
 
 	public function getActuator($sub_id){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
+		
 		$response = $this->processRequest("control/sub/".$sub_id."?wait=10", "GET");
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -160,9 +162,7 @@ class wotkit_client {
 		$this->hasParameters = false;
 	
 		$sensor_input = $this->ArraytoJSON($data_array);
-
-		$response = $this->processRequest( "sensors", "POST", $sensor_input);	
-		
+		$response = $this->processRequest("sensors", "POST", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 		
@@ -174,9 +174,7 @@ class wotkit_client {
 		$this->hasParameters = false;
 		
 		$sensor_input = $this->ArraytoJSONList($multi_dim_array);
-		
-		$response = $this->processRequest( "sensors", "PUT", $sensor_input);	
-		
+		$response = $this->processRequest("sensors", "PUT", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 		
@@ -185,30 +183,30 @@ class wotkit_client {
 	/* getSensors()
 	 * public = true  => do not supply any credentials
 	 */
-	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false) 
+	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $orgs=NULL, $public=false) 
 	{	$this->expected_http_code = 200;
-	
+		
+		$url_string = "sensors";
+		
 		if ($sensor == NULL){
 			$params = array("scope" => $scope, "active" => $active, "private" => $private, 
 							"tags" => $tags, "text" => $text, "offset" => $offset, "limit" => $limit,
-							"location" => $this->NWSELocationBox($location));
-			  
-			$url_string = "sensors?".$this->ArraytoNameValuePairs($params);
-			$this->hasParameters = true;
+							"location" => $this->NWSELocationBox($location), "orgs" => $orgs);
+			$param_string = $this->ArraytoNameValuePairs($params);
 			
-			if ( substr($url_string, -1) == '?' ){
-				$url_string=substr_replace($url_string ,"",-1);
+			if (empty($param_string))
 				$this->hasParameters = false;
+			else{
+				$url_string .= "?".$param_string;
+				$this->hasParameters = true;
 			}
-			
 		}
 		else{
-			$url_string = "sensors/".$sensor;
+			$url_string .= "/".$sensor;
 			$this->hasParameters = false;
 		}
 		
 		$response = $this->processRequest ( $url_string, "GET", null, 1, $public);
-		
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -242,7 +240,7 @@ class wotkit_client {
 		$this->hasParameters = false;
 		
 		$updated_sensor_input = $this->ArraytoJSON($data_array);
-		$response = $this->processRequest( "sensors/".$sensor, "PUT", $updated_sensor_input);
+		$response = $this->processRequest("sensors/".$sensor, "PUT", $updated_sensor_input);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -360,17 +358,17 @@ class wotkit_client {
 	//				    "orderBy" => $orderBy);
 		
 		$this->expected_http_code = 200;
-		$this->hasParameters = true;
+		$url_string = "data";
 		
-		$url_string = "data?".$this->ArraytoNameValuePairs($params);
-		
-		if ( substr($url_string, -1) == '?' ){
-			$url_string=substr_replace($url_string ,"",-1);
+		$param_string = $this->ArraytoNameValuePairs($params);
+		if (empty($param_string))
 			$this->hasParameters = false;
+		else{
+			$url_string .= "?".$param_string;
+			$this->hasParameters = true;
 		}
 
-		$response = $this->processRequest ($url_string, "GET");
-		
+		$response = $this->processRequest ($url_string, "GET");		
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -397,10 +395,10 @@ class wotkit_client {
 		
 		$params = array( "timestamp" => $timestamp, "value" => $value, 
 						 "lat" => $lat, "lng" => $lng, "message" => $message );
-		$sensor_data = $this->ArraytoNameValuePairs($params);
+		$sensor_data = $this->ArraytoNameValuePairs($params);	
 		$response = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false, $public);
-	
 		$response['data'] = json_decode($response['data'], true);
+		
 		//Allows time for the new Sensor Data to be processed before moving on. 
 		//Without sleep, you may try to query data before it has been processed. 
 		sleep(1); 
@@ -411,15 +409,15 @@ class wotkit_client {
 	public function sendNonStandardSensorData($sensor, $data_array, $JSON=false){
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
+		$url_string = "sensors/".$sensor."/data";
 		
-		if ($JSON) {
+		if ($JSON)
 			$sensor_data = $this->ArraytoJSON($data_array);
-			$response = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, true);
-		} else {
+		else
 			$sensor_data = $this->ArraytoNameValuePairs($data_array);
-			$response = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false);
-		}
+		$response = $this->processRequest($url_string, "POST", $sensor_data, $JSON);
 		$response['data'] = json_decode($response['data'], true);
+		
 		//Allows time for the new Sensor Data to be processed before moving on. 
 		//Without sleep, you may try to query data before it has been processed. 
 		sleep(1); 
@@ -433,9 +431,7 @@ class wotkit_client {
 		$this->hasParameters = false;
 		
 		$sensor_data = $this->ArraytoJSONList($multi_dim_array);
-		
-		$response = $this->processRequest( "sensors/".$sensor."/data", "PUT", $sensor_data);
-		
+		$response = $this->processRequest("sensors/".$sensor."/data", "PUT", $sensor_data);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -455,21 +451,20 @@ class wotkit_client {
 	 */
 	public function getRawSensorData($sensor, $start=NULL, $end=NULL, $after=NULL, $afterE=NULL, $before=NULL, $beforeE=NULL, $reverse=NULL, $public=false){
 		$this->expected_http_code = 200;
-		$this->hasParameters = true;
+		$url_string = "sensors/".$sensor."/data";
 		
 		$params = array("start" => $start, "end" => $end, "after" => $after, 
 						"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE,
 						"reverse"=> $reverse);
-			  
-		$url_string = "sensors/".$sensor."/data?".$this->ArraytoNameValuePairs($params);
-		
-		if ( substr($url_string, -1) == '?' ){
-			$url_string=substr_replace($url_string ,"",-1);
+		$param_string = $this->ArraytoNameValuePairs($params); 	 
+		if(empty($param_string))
 			$this->hasParameters = false;
+		else{
+			$url_string .= "?".$param_string;
+			$this->hasParameters = true;
 		}
 		
-		$response = $this->processRequest ( $url_string, "GET", null, 1, $public);	
-		
+		$response = $this->processRequest ($url_string, "GET", null, 1, $public);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -487,27 +482,24 @@ class wotkit_client {
 			$url_string .= "tqx=reqId:".$reqID;
 			if( $out != NULL ){
 				$url_string .= ";out:".$out;
-				if( $outfile != NULL ){
+				if( $outfile != NULL )
 					$url_string .= ";outfile:".$outfile;
-				}
+				
 			}
 			
-			if( $tq != NULL ){
+			if( $tq != NULL )
 				$url_string .= "&";
-			}
 		}
 		
-		if( $tq != NULL ){
+		if( $tq != NULL )
 			$url_string .= "tq=".rawurlencode ($tq);
-		}
 		
 		if ( substr($str, -1) == '?' ){
 			$url_string=substr_replace($string ,"",-1);
 			$this->hasParameters = false;
 		}
 		
-		$response = $this->processRequest ( $url_string, "GET", null, 1, $public);
-		
+		$response = $this->processRequest ($url_string, "GET", null, 1, $public);
 		return $response;
 	}
 	
@@ -515,68 +507,142 @@ class wotkit_client {
 	
 //Users	
 //**must have ROLE_ADMIN credentials to use these functions
+//*** special_user = "admin" => supply KEY for admin user
 
-	public function getUsers($user=NULL, $text=NULL, $reverse=NULL, $offset=NULL, $limit=NULL) 
+	public function getUsers($special_user=NULL, $user=NULL, $text=NULL, $reverse=NULL, $offset=NULL, $limit=NULL) 
 	{	$this->expected_http_code = 200;
-	
+		$url_string = "users";
+		
 		if ($user == NULL){
 			$params = array("text" => $text, "reverse" => $reverse, "offset" => $offset, 
 							"limit" => $limit );
-			  
-			$url_string = "users?".$this->ArraytoNameValuePairs($params);
-			$this->hasParameters = true;
-			
-			if ( substr($url_string, -1) == '?' ){
-				$url_string=substr_replace($url_string ,"",-1);
+			$param_string = $this->ArraytoNameValuePairs($params);
+			if(empty($param_string))
 				$this->hasParameters = false;
-			}	
+			else{
+				$url_string .= "?".$param_string;
+				$this->hasParameters = true;
+			}
 		}
 		else{
-			$url_string = "users/".$user;
+			$url_string .= "/".$user;
 			$this->hasParameters = false;
 		}
 	
-		$response = $this->processRequest ( $url_string, "GET");
-		
+		$response = $this->processRequest ($url_string, "GET", null, 1, false, $special_user);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
 	
-	public function createUser($user_array){
+	public function createUser($special_user=NULL, $user_array){
 		//required fields username, firstname, lastname, email, password
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 	
 		$user_input = $this->ArraytoJSON($user_array);
-
-		$response = $this->processRequest( "users", "POST", $user_input);	
-		
+		$response = $this->processRequest( "users", "POST", $user_input, 1, false, $special_user);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;		
 	}
 	
-	public function updateUser($user, $user_array){
+	public function updateUser($special_user=NULL, $user, $user_array){
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		
 		$updated_user_input = $this->ArraytoJSON($user_array);
-		$response = $this->processRequest( "users/".$user, "PUT", $updated_user_input);
+		$response = $this->processRequest("users/".$user, "PUT", $updated_user_input, 1, false, $special_user);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
 	
-	public function deleteUser($user){
+	public function deleteUser($special_user=NULL, $user){
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
-		
-		$response = $this->processRequest( "users/".$user, "DELETE");
+		$response = $this->processRequest("users/".$user, "DELETE", null, 1, false, $special_user);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
 
 
+//Organizations
+//**must have ROLE_ADMIN credentials to use these functions (expect getOrganizations)
+//*** special_user = "admin" => supply KEY for admin user
 
+		/* getOrganizations()
+		 * public = true  => do not supply any credentials
+		 */
+		public function getOrganizations($special_user=null, $org_name=null, $text=null, $offset=null, $limit=null, $public=false){
+			$this->expected_http_code = 200;
+			$url_string = "orgs";
+			
+			if (empty($org_name)){
+				$params = array("text"=>$text, "offset"=>$offset, "limit"=>$limit);
+				$param_string = $this->ArraytoNameValuePairs($params);
+				if (empty($param_string))
+					$this->hasParameters = false;
+				else{
+					$url_string .= "?".$param_string;
+					$this->hasParameters = true;
+				}
+			}else{
+				$url_string .= "/".$org_name;
+				$this->hasParameters = false;
+			}
+			
+			$response = $this->processRequest ($url_string, "GET", null, 1, $public, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
+
+		public function createOrganization($special_user=null, $new_org){
+			$this->expected_http_code = 201;
+			
+			$new_org_data = $this->ArraytoJSON($new_org);
+			$response = $this->processRequest ("orgs", "POST", $new_org_data, 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
+		
+		public function updateOrganization($special_user=null, $org_name, $updated_org){
+			$this->expected_http_code = 204;
+			
+			$updated_org_data = $this->ArraytoJSON($updated_org);
+			$response = $this->processRequest ("orgs/".$org_name, "PUT", $updated_org_data, 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
 	
+		public function deleteOrganization($special_user=null, $org_name){
+			$this->expected_http_code = 204;
+			
+			$response = $this->processRequest ("orgs/".$org_name, "DELETE", null, 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
+	
+		public function getOrganizationMembers($special_user=null, $org_name){
+			$this->expected_http_code = 200;
+			
+			$response = $this->processRequest ("orgs/".$org_name."/members", "GET", null, 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
+		
+		public function addOrganizationMembers($special_user=null, $org_name, $member_array){
+			$this->expected_http_code = 204;
+			
+			$response = $this->processRequest ("orgs/".$org_name."/members", "POST", json_encode($member_array), 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
+		
+		public function removeOrganizationMembers($special_user=null, $org_name, $member_array){
+			$this->expected_http_code = 204;
+			
+			$response = $this->processRequest ("orgs/".$org_name."/members", "DELETE", json_encode($member_array), 1, false, $special_user);
+			$response['data'] = json_decode($response['data'], true);
+			return $response;
+		}
 	
 //News
 //**does not require any credentials
@@ -638,9 +704,9 @@ class wotkit_client {
 	//				whether input $data is JSON string 
 	//@param bool $public 
 	//				whether not to provide credentials
-	//@param bool $special 
-	//				whether to provide a different user's credentials
-	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special=NULL){
+	//@param bool $special_user 
+	//				whether to provide a different user's credentials (key or basic auth)
+	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special_user=NULL){
 	
 		//Clearing old data
 		$this->response = array();
@@ -656,7 +722,7 @@ class wotkit_client {
 		#Setting cURL options
 		
 		//Logging In
-		if ( !$public ){
+		if ( !$public && empty($special_user)){
 			if ($this->accessToken != "setting"){
 				if ( $this->accessToken == "access_token=none" ){
 					curl_setopt($ch, CURLOPT_USERPWD,"{$this->key_id}:{$this->key_password}");
@@ -672,15 +738,20 @@ class wotkit_client {
 				
 			}
 		} else{
-			if ($special){
+			if (empty($special_user))
+				$permission = "Public, no authentication.";	
+		
+			if ($special_user == "other"){
 				curl_setopt($ch, CURLOPT_USERPWD,"sensetecnic:aMUSEment2");
 				$permission = "Loggged in as user: 'sensetecnic'.";
 			}
-			else{
-				$permission = "Public, no authentication.";
+				
+			if ($special_user == "admin"){
+				curl_setopt($ch, CURLOPT_USERPWD,"{$this->admin_key_id}:{$this->admin_key_password}");
+				$permission = "Using key for user: 'tester-admin'.";
 			}
 		}
-		
+
 		//Entering URL
 		curl_setopt($ch, CURLOPT_URL, $url);
 
@@ -688,25 +759,18 @@ class wotkit_client {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
 		if ( $isJSON )
-		{
 			//Necessary for these actions: Create New Sensor, Update Sensor
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json")); 
-		}
 		
 		if ($request == "PUT")
-		{
 			//Update Sensor or Sensor Data
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-		}
 		
 		if ($request == "DELETE")
-		{
 			//Delete Sensor
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-		}
 
-		if ($request != "GET" and $data!=NULL)
-		{
+		if ($request != "GET" and $data!=NULL){
 			//'Postfields' for POST or PUT requests
 			curl_setopt($ch, CURLOPT_POST, TRUE);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -720,7 +784,7 @@ class wotkit_client {
 		curl_close($ch);
 		
 		$response = array("permission"=>$permission, "url"=>$url, "request"=>$request,  
-						  "code"=>$this->response_info[http_code], "data"=>$this->response );
+						  "code"=>$this->response_info[http_code], "data"=>$this->response);
 		return $response;
 	}
 	
