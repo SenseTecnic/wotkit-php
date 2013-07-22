@@ -10,7 +10,7 @@
 /*
  * Run this script for General Key Based Testing
  * (assumes newly initilized database)
- * NOTE: any function run "as admin" uses a key NOT an access token
+ * NOTE: any function run "as admin" ALWAYS uses a key, NEVER an access token
  *
  */
 
@@ -18,7 +18,6 @@
 /**
  * Client Set-Up
  **/
- 
 require_once('wotkit_client.php');
 require_once('wotkit_clientConfig.php');
 
@@ -52,8 +51,9 @@ $test_count = 0;
 //SENSOR INPUTS	
 	//-currently able to update sensor name
 	//-no error when trying to update owner	
+	
+	//for the $generic_sensor
 	$new_sensor_input = array(
-	//"private"=>false, 
 	"visibility"=>"PUBLIC",
 	"name"=>$generic_sensor, 
 	"description"=>"api client test sensor desc", 
@@ -61,6 +61,7 @@ $test_count = 0;
 	"latitude"=>4, 
 	"longitude"=>6,
 	"tags"=>array("testing the tags","t e s t i n g ","tags"));
+		//can add fields that don't exist!!
 
 	$updated_sensor_input_1 = array(
 	 "name"=>$generic_sensor, 
@@ -68,7 +69,6 @@ $test_count = 0;
 	 "description"=>"api client test sensor desc updated",
 	 "latitude"=>55,
 	 "longitude"=>-125,
-	 //"private"=>true,
 	 "visibility"=>"PRIVATE",
 	 "tags"=>array("updating the tags","tags"));
 	 //"fields"=>[{"name":"value","longName":"Data","type":"NUMBER","units":"cm"}]);
@@ -78,17 +78,28 @@ $test_count = 0;
 	 "name"=>$generic_sensor, 
 	 "longName"=>"api client test sensor long", 
 	 "description"=>"api client test sensor desc",
-	 //"private"=>false
-	 "visibility"=>"PUBLIC"
-	 );
+	 "visibility"=>"PUBLIC" );
 	 
 	$updated_sensor_input_3 = array(
 	 "name"=> $unowned_sensor_short, 
 	 "longName"=>$unowned_sensor_full, 
 	 "description"=>$unowned_sensor_full);
 	 
+	 //just for testing private field
+	 $update_sensor_input_private = array(
+	 "name"=> $generic_sensor, 
+	 "longName"=>"longName", 
+	 "description"=>"description",
+	 "private" =>true);
+	 
+	  $update_sensor_input_public = array(
+	 "name"=> $generic_sensor, 
+	 "longName"=>"longName", 
+	 "description"=>"description",
+	 "private" =>false);
+	
+	//for the $additional_generic_sensor	
 	$additional_sensor_input = array(
-	//"private"=>false, 
 	"visibility"=>"PUBLIC",
 	"name"=>$additional_generic_sensor, 
 	"description"=>"api client test sensor additional desc", 
@@ -97,16 +108,61 @@ $test_count = 0;
 	"longitude"=>6,
 	"tags"=>array("testing the tags","t e s t i n g ","tags", "additional"));
 	
+	//for the $sensor_input_minimum_fields	
+	$sensor_input_minimum_fields = array(
+	"name"=>"min-fields-sensor", 
+	"description"=>"api client test sensor additional desc", 
+	"longName"=>"api client test sensor additional long");
+	
+	//invalid sensor inputs
 	$invalid_sensor_input = array(
 	"name"=>"invalid-sensor", 
-	"description"=>"invalid sensor desc", 
+	"description"=>"invalid sensor, no long name", 
 	"latitude"=>4, 
 	"longitude"=>6);
-	//can include any fake fields and sensor will NOT be invalid
-
+	
+	//metadata for existing sensor id=41 $exisiting_data_sensor[1]
+	$existing_metadata_1 = array("sensor-type"=>"actuator");
+	$existing_metadata_2 = array("sensor-position"=>"fixed");
+	$non_existent_metadata  = array("made-up"=>"not-real");
+	
+	//sensor metadata to add to inputs
+	$sensor_metadata = array("metadata" => 
+							array(//"mobile-sensor"=>true, //will be converted to string "true"
+									"sensor-type"=>"mobile", 
+									"sensor-number"=>999,
+									"key"=>"value"));
+									
+	$sensor_metadata_updated = array("metadata" => 
+									array(//"mobile-sensor"=>false,  //will be converted to string "false"
+											"sensor-type"=>"stationary", 
+											"sensor-number"=>9, 
+											"sensor-position"=>"fixed",
+											"sensor*"=>"*star",
+											"sensor:"=>":colon",
+											"sensor;"=>";semicolon",
+											"sensor\\"=>"\\backslash"
+											));
+								
+	$sensor_metadata_updated_escaped = array("metadata" => 
+									array(//"mobile-sensor"=>false,  //will be converted to string "false"
+											"sensor-type"=>"stationary", 
+											"sensor-number"=>9, 
+											"sensor-position"=>"fixed",
+											"sensor\*"=>"\*star",
+											"sensor\:"=>"\:colon",
+											"sensor\;"=>"\;semicolon",
+											"sensor\\\\"=>"\\\\backslash"
+											));		
+	
+	$sensor_metadata_invalid_name = array("metadata" => array(""=>"name too short"));
+	$sensor_metadata_missing_value = array("metadata" => array("valid-name"=>""));
+	//$sensor_metadata_protected_field = array("metadata" => array("owner"=>"not allowed")); //no such protected fields
+	
 //SENSOR FIELDS	
-	$invalid_field_required = array("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
-	$invalid_field_default = array("name"=>"value", "type"=>"STRING");
+	$invalid_field_missing_required_subfield = array("name"=>"testfield", "longName"=>"Test Field","units"=>"mm");	
+	$invalid_field_update_protected_field = array("name"=>"value", "type"=>"STRING");
+	//$new_field = array ("required"=>1,"name"=>"testfield", "longName"=>"Test Field", "type"=>"NUMBER",  "units"=>"mm");	
 	$new_field = array ("required"=>true,"name"=>"testfield", "longName"=>"Test Field", "type"=>"NUMBER",  "units"=>"mm");	
 	$updated_field = array ("required"=>false, "name"=>"testfield","longName"=>"Updated Test Field", "type"=>"STRING","units"=>"cm");	
 	$num_field = array ("required"=>false,"name"=>"numtestfield", "longName"=>"Num Test Field", "type"=>"NUMBER");	
@@ -128,8 +184,6 @@ $test_count = 0;
 //ACTUATOR NAME AND INPUTS
 	$actuator_name = $existing_data_sensor[1];
 	$actuator_name_full = $existing_data_sensor_full[1]; 
-	$actuator_message = array ("button"=>"on","slider"=>15, "message"=>"test message");	
-	$actuator_message_display = "button=on&slider=15&message=test message";	
 
 //USERS
 	$new_user_name = "newuser";
@@ -165,30 +219,41 @@ $test_count = 0;
 	"password" => "password2");
 
 //ORGANIZATIONS
+	//only includes mandatory org fields
 	$new_org_mandatory = array(
 	"name"=>"test-organization", 
 	"longName"=>"First Test Organization");
-	$new_org_invalid_name = array(
-	"name"=>"0", 
-	"longName"=>"Invalid Organization");
-	$new_org_missing_longname = array("name"=>"invalid-organization");
-	$updated_org_name = array(
-	"name"=>"updated-test-organiztion", 
-	"longName"=>"First Test Organization Updated");	
-	$updated_org_all = array(
-	"longName"=>"First Test Organization Updated", 
-	"description"=>"Updated with description", 
-	"imageUrl"=>"placeholder");
 	
+	//includes all org fields
 	$new_org_all = array(
 	"name"=>"test-organization-2", 
 	"longName"=>"Second Test Organization",
 	"description"=>"Second Test Organization Description", 
-	"imageUrl"=>"placeholder");					
+	"imageUrl"=>"http://www.placeholder2.com");			
+
+	//invalid new orgs
+	$new_org_invalid_name = array(
+	"name"=>"0", 
+	"longName"=>"Invalid Organization");
+	
+	$new_org_missing_longname = array("name"=>"invalid-organization");	
+	
+	//updated org inputs
 	$updated_org_longName = array("longName"=>"ONLY FIELD NOT NULL");
 	
+	$updated_org_name = array(
+	"name"=>"updated-test-organiztion", 
+	"longName"=>"First Test Organization Updated");	
+	
+	$updated_org_all = array(
+	"longName"=>"First Test Organization Updated", 
+	"description"=>"Updated with description", 
+	"imageUrl"=>"http://www.placeholder1.com");
+	
+	//org members array
 	$added_members = array('tester', 'tester-admin');
 	
+	//sensors with specified orgs
 	$org_sensor_input = array(
 	"organization"=>$new_org_all['name'],
 	"visibility"=>"ORGANIZATION",
@@ -197,6 +262,34 @@ $test_count = 0;
 	"longName"=>"org sensor", 
 	"latitude"=>44, 
 	"longitude"=>66);
+	
+	$org_sensor_input_not_member = array(
+	"organization"=>$new_org_mandatory['name'],
+	"visibility"=>"ORGANIZATION",
+	"name"=>"org-sensor-not-member", 
+	"description"=>"sensor for org: ".$new_org_mandatory['name'], 
+	"longName"=>"org sensor not member", 
+	"latitude"=>1, 
+	"longitude"=>2);
+	
+	$org_sensor_input_non_existent = array(
+	"organization"=>"made-up",
+	"visibility"=>"ORGANIZATION",
+	"name"=>"org-sensor-made-up", 
+	"description"=>"sensor for org: made-up", 
+	"longName"=>"org sensor made up", 
+	"latitude"=>1, 
+	"longitude"=>2);
+	
+	$update_org_sensor_input = array(
+	"organization"=>$new_org_mandatory['name'],
+	"visibility"=>"ORGANIZATION",
+	"name"=>"org-sensor", 
+	"description"=>"sensor for org: ".$new_org_mandatory['name'], 
+	"longName"=>"org sensor", 
+	"latitude"=>77, 
+	"longitude"=>77);
+	
 	
 //Table of Contents	
 	$toc_keys = array('Sensors', 'Subscriptions', 'Data', 'Raw Data', 'Formatted Data', 
@@ -220,66 +313,101 @@ echo '</div>';
 
 printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 
-printLabel(null,"....testing creation of multiple sensors.......", true);
-#Create TWO sensors: 'api-client-test-sensor' & 'api-client-test-sensor_additional' 
-#Create MULTIPLE sensors 
-	$title = "\n\n [CREATE MULTIPLE sensors: '".$generic_sensor."' & '".$additional_generic_sensor."'] \n";
-	$expected = 2;
-	$response = $wotkit_client->createMultipleSensor(array($new_sensor_input, $additional_sensor_input), true);
-	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'],array($generic_sensor=>true,$additional_generic_sensor=>true));
-	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
+	printLabel(null,"[....testing creation of multiple sensors.......]", true);
+	#Create TWO sensors: 'api-client-test-sensor' & 'api-client-test-sensor_additional' 
+	#Create MULTIPLE sensors 
+		$title = "\n\n [CREATE MULTIPLE sensors: '".$generic_sensor."' & '".$additional_generic_sensor."'] \n";
+		$expected = 2;
+		$response = $wotkit_client->createMultipleSensor(array($new_sensor_input, $additional_sensor_input), true);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'],array($generic_sensor=>true,$additional_generic_sensor=>true));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected);
 
-#Create TWO EXISTING sensors 'api-client-test-sensor' & 'api-client-test-sensor_additional'
-#Create MULTIPLE existing sensors	
-	$title="\n\n [CREATE multiple EXISTING sensors: '".$generic_sensor."' & '".$additional_generic_sensor."'] \n";
-	$response = $wotkit_client->createMultipleSensor(array($new_sensor_input, $additional_sensor_input), true);	
-	$test_status = $wotkit_client->checkHTTPcode(409);
-	$problem = checkError($response['data'], 'already exists', 'already exists');
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	#Create TWO EXISTING sensors 'api-client-test-sensor' & 'api-client-test-sensor_additional'
+	#Create MULTIPLE existing sensors	
+		$title="\n\n [CREATE multiple EXISTING sensors: '".$generic_sensor."' & '".$additional_generic_sensor."'] \n";
+		$response = $wotkit_client->createMultipleSensor(array($new_sensor_input, $additional_sensor_input), true);	
+		$test_status = $wotkit_client->checkHTTPcode(409);
+		$problem = checkError($response['data'], 'already exists', 'already exists');
+		displayTestResults ($problem, false, $title, $test_status, $response);
 
-#Create AN INVALID sensor
-//can include any fake fields and sensor will NOT be invalid
-//excluding a manadatory field WILL make sensor invalid
-	$title = "\n\n [CREATE an INVALID sensor by excluding longName - a mandatory field] \n";
-	$response = $wotkit_client->createMultipleSensor(array($invalid_sensor_input), true);	
-	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'Missing required field', 'longName');
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	#Create AN INVALID sensor
+	//can include any fake fields and sensor will NOT be invalid
+	//excluding a manadatory field WILL make sensor invalid
+		$title = "\n\n [CREATE an INVALID sensor by excluding longName - a mandatory field] \n";
+		$response = $wotkit_client->createMultipleSensor(array($invalid_sensor_input), true);	
+		$test_status = $wotkit_client->checkHTTPcode(400);
+		$problem = checkError($response['data'], 'invalid', 'longName');
+		displayTestResults ($problem, false, $title, $test_status, $response);
 
-#Query  'api-client-test-sensor'
-#Check for a SINGLE sensor that DOES exist
-	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
-	$response = $wotkit_client->getSensors($generic_sensor);
-	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $new_sensor_input); 
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	#Query  'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+		$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'], $new_sensor_input); 
+		displayTestResults ($problem, false, $title, $test_status, $response);
 
-#Delete 'api-client-test-sensor'
-#Delete a SINGLE sensor that DOES exist
-	$title = "\n\n [DELETE sensor: '".$generic_sensor."'] \n";
-	$response = $wotkit_client->deleteSensor($generic_sensor);
+	#Delete 'api-client-test-sensor'
+	#Delete a SINGLE sensor that DOES exist
+		$title = "\n\n [DELETE sensor: '".$generic_sensor."'] \n";
+		$response = $wotkit_client->deleteSensor($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+		
+	#Query deleted 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES NOT exist
+		$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode(404);
+		$problem = checkError($response['data'], 'No sensor');
+		displayTestResults ($problem, false, $title, $test_status, $response);		
+
+	#Query 'api-client-test-sensor-additional'
+	#Check for a SINGLE sensor that DOES exist
+		$title = "\n\n [QUERY sensor: '".$additional_generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($additional_generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'], $additional_sensor_input); 
+		displayTestResults ($problem, false, $title, $test_status, $response);
+
+	#Delete 'api-client-test-sensor_additional'
+	#Delete a SINGLE sensor that DOES exist
+		$title = "\n\n [DELETE sensor: '".$additional_generic_sensor."'] \n";
+		$response = $wotkit_client->deleteSensor($additional_generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query deleted 'api-client-test-sensor_additional'
+	#Check for a SINGLE sensor that DOES NOT exist
+		$title = "\n\n [QUERY deleted sensor: '".$additional_generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($additional_generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode(404);
+		$problem = checkError($response['data'], 'No sensor');
+		displayTestResults ($problem, false, $title, $test_status, $response);		
+		
+	printLabel(null, "[....done testing creation of multiple sensors.......]", true);
+
+#Create new sensor with minimum fields
+	$title = "\n\n [CREATE sensor with minimum fields: '".$sensor_input_minimum_fields['name']."'] \n";
+	$response = $wotkit_client->createSensor($sensor_input_minimum_fields);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 
-#Query 'api-client-test-sensor-additional'
+#Query created sensor
 #Check for a SINGLE sensor that DOES exist
-	$title = "\n\n [QUERY sensor: '".$additional_generic_sensor."']\n";
-	$response = $wotkit_client->getSensors($additional_generic_sensor);
+	$title = "\n\n [QUERY sensor: '".$sensor_input_minimum_fields['name']."']\n";
+	$response = $wotkit_client->getSensors($sensor_input_minimum_fields['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	//$problem = checkArraysEqual($response['data'], $additional_sensor_input); 
-	//displayTestResults ($problem, false, $title, $test_status, $response);
-	displayTestResults (null, true, $title, $test_status, $response);
+	$problem = checkArraysEqual($response['data'], $sensor_input_minimum_fields); 
+	displayTestResults ($problem, false, $title, $test_status, $response);	
 
 #Delete 'api-client-test-sensor_additional'
 #Delete a SINGLE sensor that DOES exist
-	$title = "\n\n [DELETE sensor: '".$additional_generic_sensor."'] \n";
-	$response = $wotkit_client->deleteSensor($additional_generic_sensor);
+	$title = "\n\n [DELETE sensor: '".$sensor_input_minimum_fields['name']."'] \n";
+	$response = $wotkit_client->deleteSensor($sensor_input_minimum_fields['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
-	
-printLabel(null, "....done testing creation of multiple sensors.......", true);
-
+	displayTestResults (null, false, $title, $test_status, $response);	
 	
 #Create 'api-client-test-sensor'
 #Create new sensor
@@ -296,20 +424,18 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 	$problem = checkError($response['data'], 'already exists', 'already exists');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
-
 #Query created 'api-client-test-sensor'
 #Check for a SINGLE sensor that DOES exist
 	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'],$new_sensor_input); 
+	$problem = checkArraysEqual($response['data'], $new_sensor_input); 
 	displayTestResults ($problem, false, $title, $test_status, $response);
-	
 	
 //!!!!!!!CAN change sensor name	
 #Update 'api-client-test-sensor'
 #Update longname(required), description(required), privacy, lat, lng, tags   
-	$title = "\n\n [UPDATE longname, description, visibilty, lat, lng, & tags for sensor: '".$generic_sensor."']\n";
+	$title = "\n\n [UPDATE longname, description, visibility, lat, lng, & tags for sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->updateSensor($generic_sensor, $updated_sensor_input_1);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
@@ -320,28 +446,29 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 	$response = $wotkit_client->getSensors ($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkArraysEqual($response['data'], $updated_sensor_input_1);
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	displayTestResults ($problem, true, $title, $test_status, $response);
 		
 #Update 'api-client-test-sensor'
 #Update name, longname, description (required)  
-	$title = "\n\n [UPDATE longname, description, & visibilty for sensor:'".$generic_sensor."']\n";
+	$title = "\n\n [UPDATE longname, description, & visibility for sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->updateSensor($generic_sensor, $updated_sensor_input_2);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 	
 #Query created 'api-client-test-sensor'
 #Check for a SINGLE updated sensor that DOES exist
+	echo 'Note: "visibility", "latitude" & "longitude" fields have been overwritten.';
 	$title = "\n\n [QUERY created '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors ($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkArraysEqual($response['data'], $updated_sensor_input_2);
-	displayTestResults ($problem, false, $title, $test_status, $response);
+	displayTestResults ($problem, true, $title, $test_status, $response);
 
 	
 
 	//----------------Sensor Fields---------------//
 	//SENSOR FIELDS
-	printLabel(null, ".....testing sensor fields......", true);
+	printLabel(null, "[.....testing sensor fields......]", true);
 
 	#Query mulitple fields for 'api-client-test-sensor'
 		$title = "\n\n [QUERY multiple fields for sensor: '".$generic_sensor."']\n";
@@ -353,14 +480,14 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 
 	#Create incomplete field to 'api-client-test-sensor'	
 		$title = "\n\n [CREATE new field with INCOMPLETE field information for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_required);
+		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_missing_required_subfield);
 		$test_status = $wotkit_client->checkHTTPcode(400);
 		$problem = checkError($response['data'], 'Missing required field');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 		
 	#Update default field of 'api-client-test-sensor'	
 		$title = "\n\n [UPDATE protected subfield of the default field 'value' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_default);
+		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_update_protected_field);
 		$test_status = $wotkit_client->checkHTTPcode(400);
 		$problem = checkError($response['data'], 'Missing required field', 'Cannot change');
 		displayTestResults ($problem, false, $title, $test_status, $response);
@@ -466,7 +593,7 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message'));
 		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 
-	printLabel(null, ".....done testing sensor fields......", true);
+	printLabel(null, "[.....done testing sensor fields......]", true);
 	//-------------------------------------------------------------//
 
 
@@ -481,14 +608,6 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 #Check for a SINGLE sensor that DOES NOT exist
 	$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
-	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor');
-	displayTestResults ($problem, false, $title, $test_status, $response);
-
-#Query deleted 'api-client-test-sensor_additional'
-#Check for a SINGLE sensor that DOES NOT exist
-	$title = "\n\n [QUERY deleted sensor: '".$additional_generic_sensor."']\n";
-	$response = $wotkit_client->getSensors($additional_generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], 'No sensor');
 	displayTestResults ($problem, false, $title, $test_status, $response);
@@ -516,7 +635,388 @@ printLabel(null, "....done testing creation of multiple sensors.......", true);
 	$problem = checkError($response['data'], 'Not the owner');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
+	//----------------Sensor with Metadata---------------//
+	//Sensor with Metadata
+	printLabel(null, "[.....testing sensor metadata......]", true);
+	
+	#Create 'api-client-test-sensor'
+	#Create new sensor with metadata
+	$title = "\n\n [CREATE sensor with metadata: '".$generic_sensor."'] \n";
+	$sensor_input_with_metadata = array_merge($new_sensor_input,$sensor_metadata);
+	$response = $wotkit_client->createSensor($sensor_input_with_metadata);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#QUERY sensor by all metadata
+	$title = "\n\n [QUERY all metadata for sensor: '".$generic_sensor."']\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, $sensor_metadata['metadata'] );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#Update 'api-client-test-sensor' metadata
+	#Update metadata
+	$title = "\n\n [UPDATE metadata for sensor: '".$generic_sensor."']\n";
+	$updated_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_updated);	
+	$response = $wotkit_client->updateSensor($generic_sensor, $updated_sensor_input_with_metadata);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";	
+	$response = $wotkit_client->getSensors($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Query metadata from 'api-client-test-sensor'
+	#QUERY sensor by metadata
+	$title = "\n\n [QUERY all metadata for sensor: '".$generic_sensor."']\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, $sensor_metadata_updated_escaped['metadata'] );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#Create 'api-client-test-sensor-addtional'
+	#Create new sensor with metadata
+	$title = "\n\n [CREATE sensor with metadata: '".$additional_generic_sensor."'] \n";
+	$additional_sensor_input_with_metadata = array_merge($additional_sensor_input,$sensor_metadata);
+	$response = $wotkit_client->createSensor($additional_sensor_input_with_metadata);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor-additional'
+	#Check for a SINGLE sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$additional_generic_sensor."']\n";
+	$response = $wotkit_client->getSensors($additional_generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$additional_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Query metadata from 'api-client-test-sensor-additional'
+	#QUERY sensor by metadata
+	$title = "\n\n [QUERY all metadata for sensor: '".$additional_generic_sensor."']\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, $sensor_metadata['metadata'] );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$additional_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	//
+	#QUERY sensor by metadata: single key
+	$title = "\n\n [QUERY metadata for sensors: '".$generic_sensor."' and '".$additional_generic_sensor."' (key only)]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-number"=>""));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $additional_generic_sensor));  
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key 
+	$title = "\n\n [QUERY metadata for sensor: '".$additional_generic_sensor."' (key only)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("key"=>"") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$additional_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key with value*
+	$title = "\n\n [QUERY metadata for sensors: '".$generic_sensor."' and '".$existing_data_sensor[1]."' (key and partial value)]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-position"=>"fi*") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key with value*
+	$title = "\n\n [QUERY metadata for sensors: '".$generic_sensor."' and '".$additional_generic_sensor."' (key and partial value)]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-number"=>"9*") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $additional_generic_sensor)); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key with exact value
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key and exact value)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-number"=>"9") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key with exact value
+	$title = "\n\n [QUERY metadata for sensor: '".$additional_generic_sensor."' (key and exact value)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("key"=>"value") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$additional_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: single key with exact value
+	$title = "\n\n [QUERY metadata for sensors: '".$additional_generic_sensor."' and '".$existing_data_sensor[1]."' (key and exact value)]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-position"=>"fixed") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key & key with value*
+	$title = "\n\n [QUERY metadata for sensors: '".$generic_sensor."' and '".$existing_data_sensor[1]."' (key only & key and partial value]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-type"=>"", "sensor-position"=>"f*") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key & key with value*
+	$title = "\n\n [QUERY metadata for sensors: '".$generic_sensor."' and '".$additional_generic_sensor."' (key only & key and partial value]\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-type"=>"", "sensor-number"=>"9*") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $additional_generic_sensor)); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key with escaped*
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with escaped *)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\*"=>""));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key with unescaped*
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with unescaped *)]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor*"=>"") );
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], "Unexpected format for metadata query", "asterisk found in key"); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#QUERY sensor by metadata: solitary key with escaped:
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with escaped :)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\:"=>""));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key with unescaped:
+	
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with unescaped :)]\n";
+	$expected = 0;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor:"=>"") );
+	echo "Assumes : indicates empty value";
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response, $expected);
+	
+	#QUERY sensor by metadata: solitary key with escaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with escaped ;)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\;"=>""));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key with unescaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with unescaped ;)]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor;"=>"") );
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], "Unexpected format for metadata query", "empty key"); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#QUERY sensor by metadata: solitary key with escaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with escaped \)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\\\\"=>""));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: solitary key with unescaped\
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (key with unescaped \)]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\\"=>"") );
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], "Unexpected format for metadata query", "Attempted to escape"); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	//
+	//
+	#QUERY sensor by metadata: value with escaped*
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with escaped *)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\*"=>"\*star"));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: value with escaped:
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with escaped :)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\:"=>"\:colon"));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: value with unescaped:
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with unescaped :)]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\:"=>":colon") );
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], "Unexpected format for metadata query", "unescaped colon found"); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#QUERY sensor by metadata: value with escaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with escaped ;)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\;"=>"\;semicolon"));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: value with unescaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with unescaped ;)]\n";
+	$expected = 0;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\;"=>";seimcolon") );
+	echo "Assumes two keys given";
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response, $expected);
+	
+	#QUERY sensor by metadata: value with escaped;
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with escaped \)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\\\\"=>"\\\\backslash"));
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by metadata: value with unescaped\
+	$title = "\n\n [QUERY metadata for sensor: '".$generic_sensor."' (value with unescaped \)]\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor\\\\"=>"\\backslash") );
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], "Unexpected format for metadata query", "Attempted to escape"); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	//
+	
+	#Update 'api-client-test-sensor' with invalid data
+	#Update metadata with invalid NAME  
+	$title = "\n\n [UPDATE, with invalid metadata field name, sensor: '".$generic_sensor."']\n";
+	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_invalid_name);
+	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'invalid');
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Update 'api-client-test-sensor' with invalid data
+	#Update metadata with missing metadata value
+	$title = "\n\n [UPDATE, with missing metadata field value, sensor: '".$generic_sensor."']\n";
+	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_missing_value);	
+	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'invalid');
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE updated sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors ($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
 
+	// #Update 'api-client-test-sensor' with invalid data
+	// #Update metadata with protected field 
+	// $invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_protected_field);	
+	// $title = "\n\n [UPDATE sensor with protected name metadata field value: '".$generic_sensor."']\n";
+	// $response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
+	// $test_status = $wotkit_client->checkHTTPcode(400);
+	// $problem = checkError($response['data'], 'invalid');
+	// displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE updated sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors ($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !($response['data']['visibility'] == 'PUBLIC');
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#QUERY sensor by partial metadata
+	$title = "\n\n [QUERY partial metadata for sensor: '".$existing_data_sensor[1]."']\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, $existing_metadata_1);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !($response['data'][0]['name'] == $existing_data_sensor[1]);
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#QUERY sensor by partial metadata
+	$title = "\n\n [QUERY partial metadata for sensors: '".$generic_sensor."' and '".$existing_data_sensor[1]."']\n";
+	$expected = 2;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, $existing_metadata_2);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]), array ($generic_sensor, $existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'],$updated_sensor_input_with_metadata); 
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Update 'api-client-test-sensor' with private=true
+	$title = "\n\n [UPDATE, with private=true, sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->updateSensor($generic_sensor, $update_sensor_input_private);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE updated sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors ($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !($response['data']['visibility'] == 'PRIVATE');
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Update 'api-client-test-sensor' with private=false
+	$title = "\n\n [UPDATE, with private=false, sensor:'".$generic_sensor."']\n";
+	$response = $wotkit_client->updateSensor($generic_sensor, $update_sensor_input_public);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE updated sensor that DOES exist
+	$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+	$response = $wotkit_client->getSensors ($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !($response['data']['visibility'] == 'PUBLIC');
+	displayTestResults ($problem, false, $title, $test_status, $response);
+	
+	#Delete 'api-client-test-sensor'
+	#Delete a SINGLE sensor that DOES exist
+	$title = "\n\n [DELETE sensor: '".$generic_sensor."'] \n";
+	$response = $wotkit_client->deleteSensor($generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Delete 'api-client-test-sensor-additional'
+	#Delete a SINGLE sensor that DOES exist
+	$title = "\n\n [DELETE sensor: '".$additional_generic_sensor."'] \n";
+	$response = $wotkit_client->deleteSensor($additional_generic_sensor);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);
+	
+	printLabel(null, "[.....done testing sensor metadata......]", true);
+	//-------------------------------------------------------------//
+	
+	
 
 //SENSOR SUBSCRIPTIONS
 printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");	
@@ -578,8 +1078,117 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
+	//----------------Subscriptions and Visibility---------------//
+	//Subscription and Visibility
+	printLabel(null, "[.....testing subscription and visibilty......]", true);
 	
+	#Create 'api-client-test-sensor'
+	#Create public sensor
+		$title = "\n\n [CREATE public sensor: '".$generic_sensor."'] \n";
+		$response = $wotkit_client->createSensor($new_sensor_input);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+		
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+		$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'],$new_sensor_input); 
+		displayTestResults ($problem, false, $title, $test_status, $response);			
 
+	#Subscribe to sensor
+		$title = "\n\n [SUBSCRIBE to sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->subscribeSensor($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+
+	#Get subscribed sensors
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 4;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short, $generic_sensor));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+
+	#Update 'api-client-test-sensor'
+	#Limit sensor's visibility to PRIVATE	
+		$title = "\n\n [UPDATE visibility=PRIVATE for sensor:'".$generic_sensor."']\n";
+		$response = $wotkit_client->updateSensor($generic_sensor, $updated_sensor_input_1);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+		$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'],$updated_sensor_input_1); 
+		displayTestResults ($problem, false, $title, $test_status, $response);		
+		
+	#Get subscribed sensor
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 3;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+		
+	#Subscribe to sensor
+		$title = "\n\n [SUBSCRIBE to sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->subscribeSensor($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+		
+	#Get subscribed sensor
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 4;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short, $generic_sensor));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+		
+	#Update 'api-client-test-sensor'
+	#Increase sensor's visibility to PUBLIC
+		$title = "\n\n [UPDATE visibility=PUBLIC for sensor:'".$generic_sensor."']\n";
+		$response = $wotkit_client->updateSensor($generic_sensor, $updated_sensor_input_2);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+	
+	#Query created 'api-client-test-sensor'
+	#Check for a SINGLE sensor that DOES exist
+		$title = "\n\n [QUERY sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensors($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkArraysEqual($response['data'], $updated_sensor_input_2); 
+		displayTestResults ($problem, false, $title, $test_status, $response);	
+			
+	#Get subscribed sensor
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 4;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short, $generic_sensor));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
+	#Delete 'api-client-test-sensor'
+	#Delete a SINGLE sensor that DOES exist
+		$title = "\n\n [DELETE sensor: '".$generic_sensor."'] \n";
+		$response = $wotkit_client->deleteSensor($generic_sensor);
+		$test_status = $wotkit_client->checkHTTPcode();
+		displayTestResults (null, false, $title, $test_status, $response);
+		
+	#Get subscribed sensor
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 3;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
+	
+	printLabel(null, "[.....done testing subscription and visibility......]", true);
+	//-------------------------------------------------------------//
+	
 //SENSOR DATA
 printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 
@@ -762,13 +1371,12 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 
-	
 #Query data from existing sensor
 	$title = "\n\n [QUERY data from sensor: '".$existing_data_sensor[2]."'] \n";
 	$expected = 3;
 	$response = $wotkit_client->getSensorData($existing_data_sensor[2]);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'][1], $updated_sensor_data);
+	$problem = checkArraysEqual($response['data'][1], $updated_sensor_data[0]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 	
 #Send new piece of data	
@@ -897,14 +1505,14 @@ date_default_timezone_set($old_timezone);
 	$last_key=key($saved_response);
 	$updated_sensor_data = array(
 	array("timestamp"=>$saved_response[0][timestamp],
-	 "value"=>"6",
-	 "lat"=>64,
-	 "lng"=>-623,
+	 "value"=>6,
+	 "lat"=>66,
+	 "lng"=>-666,
 	 "message"=>"start timestamp"),
 	 array("timestamp"=>$saved_response[$last_key][timestamp],
 	 "value"=>9,
-	 "lat"=>94,
-	 "lng"=>-913,
+	 "lat"=>99,
+	 "lng"=>-999,
 	 "message"=>"end timestamp")
 	 );
 	$response = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
@@ -945,7 +1553,7 @@ date_default_timezone_set($old_timezone);
 
 	//----------------Sensor Fields---------------//
 	//SENSOR FIELDS
-	printLabel(null, ".....testing sensor fields......", true);
+	printLabel(null, "[.....testing sensor fields......]", true);
 
 	#Query mulitple fields for 'api-data-test-3'
 		$title = "\n\n [QUERY multiple fields from sensor: '".$existing_data_sensor[2]."']\n";
@@ -1019,7 +1627,7 @@ date_default_timezone_set($old_timezone);
 		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message'));
 		displayTestResults ($problem, true, $title, $test_status, $response, $expected, true);	
 
-	printLabel(null, ".....done testing sensor fields......", true);	
+	printLabel(null, "[.....done testing sensor fields......]", true);	
 	//---------------------------------------------------------------//
 
 			
@@ -1073,12 +1681,8 @@ date_default_timezone_set($old_timezone);
 #Deleting latest data from EMPTY existing sensor
 	$title = "\n\n [DELETE latest data from EMPTY sensor: '".$existing_data_sensor[2]."'] \n";
 	$saved_response = json_decode($wotkit_client->response, true);
-	end($saved_response);
-	$last_key=key($saved_response);
-	$time_stamp=$saved_response[$last_key][timestamp];
 	$response = $wotkit_client->deleteSensorData( $existing_data_sensor[2], $time_stamp);
-	$test_status = $wotkit_client->checkHTTPcode(405);
-	//!!!!!!!!!!! no readable error message
+	$test_status = $wotkit_client->checkHTTPcode(204);
 	displayTestResults (null, false, $title, $test_status, $response);
 
 	
@@ -1115,15 +1719,15 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	$saved_data = $response['data'];
 	
 #Querying raw data START END
-	$title = "\n\n [Querying raw data from > 2pm January 7th to <= 1pm January 8th from sensor: '".$existing_data_sensor[0]."'] \n";
+	$title = "\n\n [Querying elements of raw data where (2pm January 7th < date <= 1pm January 8th) from sensor: '".$existing_data_sensor[0]."'] \n";
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, $end_time);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data], $saved_data[2]);
+	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data BEFORE
-	$title = "\n\n [Querying elements of raw data <= 1.5hr BEFORE 2pm January 7th from sensor: '".$existing_data_sensor[0]."'] \n";
+	$title = "\n\n [Querying elements of raw data where (1.5hr BEFORE 2pm January 7th < date <= 2pm January 7th) from sensor: '".$existing_data_sensor[0]."'] \n";
 	$expected = 2;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, NULL, NULL, 1.5*3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1133,11 +1737,11 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 	
 #Querying raw data AFTER
-	$title = "\n\n [Querying elements of raw data > 1 hr AFTER 2pm January 7th from sensor: '".$existing_data_sensor[0]."'] \n";
+	$title = "\n\n [Querying elements of raw data where (2pm January 7th < date <= 1 hr AFTER 2pm January 7th) from sensor: '".$existing_data_sensor[0]."'] \n";
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, 3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data], $saved_data[3]);
+	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 	
 #Querying raw data BEFOREE
@@ -1218,20 +1822,27 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	//displayOutput ($data, $test_status, $expected);
 	
 #Querying PRIVATE
-	$title = "\n\n [Query PRIVATE] \n";
-	$private = 1;
-	$response = $wotkit_client->getSensors (null, NULL, NULL,"true");
+	$title = "\n\n [Query visibility=PRIVATE] \n";
+	$private_sensors = 1;
+	$response = $wotkit_client->getSensors (null, NULL, NULL,"PRIVATE");
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[2]));
 	displayTestResults ($problem, false, $title, $test_status, $response, $private);
+
+#Querying ORGANIZATION (although not a member of any)
+	$title = "\n\n [Query visibility=ORGANIZATION (ASSUMES returned value is correct number of sensors)] \n";
+	$response = $wotkit_client->getSensors (null, NULL, NULL,"ORGANIZATION");
+	$org_sensors = count($response['data']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, true, $title, $test_status, $response, $org_sensors);
 	
-#Querying NOT PRIVATE
-	$title = "\n\n [Query NOT PRIVATE] \n";
-	$expected = $total_sensors - $private;
-	$response = $wotkit_client->getSensors (null, NULL, NULL,"false");
+#Querying PUBLIC
+	$title = "\n\n [Query visibility=PUBLIC] \n";
+	$expected = $total_sensors - $private_sensors - $org_sensors;
+	$response = $wotkit_client->getSensors (null, NULL, NULL,"PUBLIC");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected);
-	
+
 #Querying SUBSCRIBED & ACTIVE
 	$title = "\n\n [Query SUBSCRIBED & ACTIVE] \n";
 	$expected = 2;
@@ -1263,17 +1874,33 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $existing_data_sensor[2]));
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
+
+#Querying TAGGED multiple AND
+	$title = "\n\n [Query TAGGED Canada AND Vancouver] \n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors (null, NULL, NULL, NULL, "Canada;vancouver");
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0]));
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
 	
-#Querying TAGGED multiple
-	$title = "\n\n [Query TAGGED vancouver, edmonton] \n";
+#Querying TAGGED multiple OR
+	$title = "\n\n [Query TAGGED Canada OR Vancouver] \n";
+	$expected = 3;
+	$response = $wotkit_client->getSensors (null, NULL, NULL, NULL, "Canada,vancouver");
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $existing_data_sensor[2]));
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
+	
+#Querying TAGGED multiple OR
+	$title = "\n\n [Query TAGGED vancouver OR edmonton] \n";
 	$expected = 2;
 	$response = $wotkit_client->getSensors (null, NULL, NULL, NULL,"vancouver,edmonton");
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1]));
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
 	
-#Querying TAGGED Cross Tags
-	$title = "\n\n [Query TAGGED data, Canada] \n";
+#Querying TAGGED Cross Tags (or)
+	$title = "\n\n [Query TAGGED data OR Canada] \n";
 	$expected = 3;
 	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, "data,Canada") ;
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1347,7 +1974,54 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected);	
 	
+#Querying METADATA all
+	$title = "\n\n [Query all metadata for sensor: ".$existing_data_sensor[1]."] \n";
+	$expected = 1;
+	$existing_metadata = array_merge($existing_metadata_1, $existing_metadata_2);
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $existing_metadata) ;
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = ! ($response['data'][0]['name'] == $existing_data_sensor[1] );
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
+	
+#Querying METADATA partial
+	$title = "\n\n [Query partial metadata for sensor: ".$existing_data_sensor[1]."] \n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $existing_metadata_1) ;
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = ! ($response['data'][0]['name'] == $existing_data_sensor[1] );
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
 
+#Querying METADATA partial
+	$title = "\n\n [Query partial metadata for sensor: ".$existing_data_sensor[1]."] \n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $existing_metadata_2) ;
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = ! ($response['data'][0]['name'] == $existing_data_sensor[1] );
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
+	
+#Querying METADATA existent and non-existent
+	$title = "\n\n [Query exsiting and non-existing metadata for sensor: ".$existing_data_sensor[1]."] \n";
+	$expected = 0;
+	$existing_metadata = array_merge($existing_metadata_1, $non_existent_metadata);
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $existing_metadata) ;
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response, $expected);	
+	
+#Querying METADATA non-existent
+	$title = "\n\n [Query non-existent metadata for sensor: ".$existing_data_sensor[1]."] \n";
+	$expected = 0;
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $non_existent_metadata) ;
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response, $expected);	
+
+#QUERY sensor by metadata: single key with exact value
+	$title = "\n\n [QUERY metadata for sensor: '".$existing_data_sensor[1]."' (key and exact value)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-position"=>"fixed") );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors($response['data'],array($existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
+	
 	
 //AGGREGATE SENSOR DATA
 printLabel($toc_keys[6], "[*****TESTING QUERYING AGGREGATE SENSOR DATA******]");
@@ -1420,15 +2094,20 @@ printLabel($toc_keys[6], "[*****TESTING QUERYING AGGREGATE SENSOR DATA******]");
 printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 
 #Subscribe to, send data to, and get data from actuator you DO own
+	$actuator_message = array ("button"=>"on","slider"=>15, "message"=>"test message");	
+	echo nl2br("Sending messge ".http_build_query($actuator_message)."\n");
+	
 	$title = "\n\n [Subscribe to, send data to, and get data from OWNED actuator: '".$actuator_name."'] \n";
 	$expected = 1;
-	echo nl2br("Sending messge ".$actuator_message_display."\n");
 	$response = $wotkit_client->testActuator($actuator_name, $actuator_message);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $actuator_message);
+	$problem = checkArraysEqual($response['data'][0], $actuator_message);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
 
 #Send data to actuator you DO NOT own
+	$actuator_message = array ("button"=>"off","slider"=>515, "message"=>"test message 2");	
+	echo nl2br("Sent message: ".http_build_query($actuator_message)."\n");
+	
 	$title = "\n\n [Send data - with NO credentials - to PUBLIC actuator: '".$actuator_name_full."'] \n";
 	$public = true;
 	$expected = 1;
@@ -1438,14 +2117,16 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);	
 	
-	echo nl2br("Sent message: ".$actuator_message_display."\n");
 	$title = "\n\n [Get message from OWNED actuator: '".$actuator_name_full."'] \n";
 	$response = $wotkit_client->getActuator($sub_id);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $actuator_message);
+	$problem = checkArraysEqual($response['data'][0], $actuator_message);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
 
 #Send data to actuator you DO NOT own
+	$actuator_message = array ("button"=>"on","slider"=>15, "message"=>"test message 3");
+	echo nl2br("Sent message: ".http_build_query($actuator_message)."\n");
+	
 	$title = "\n\n [Send data - with NON-OWNER credentials - to PUBLIC actuator: '".$actuator_name_full."'] \n";
 	$public = true;
 	$expected = 1;
@@ -1455,11 +2136,10 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response);
 	
-	echo nl2br("Sent message: ".$actuator_message_display."\n");
 	$title = "\n\n [Get message from OWNED actuator: '".$actuator_name_full."'] \n";
 	$response = $wotkit_client->getActuator($sub_id);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $actuator_message);
+	$problem = checkArraysEqual($response['data'][0], $actuator_message);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);	
 	
 #Subscribe to PRIVATE actuator you DO NOT own
@@ -1470,7 +2150,8 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	
 #Send message to PRIVATE actuator you DO NOT own
 	$title = "\n\n [Send message to UNOWNED, PRIVATE actuator: '".$private_unowned_sensor."'] \n";
-	echo nl2br("Sending messge ".$actuator_message_display."\n");
+	$actuator_message = array ("button"=>"off","slider"=>515, "message"=>"test message 4");	
+	echo nl2br("Sending messge ".http_build_query($actuator_message)."\n");
 	$response = $wotkit_client->sendActuator($private_unowned_sensor, $actuator_message);
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayTestResults (null, false, $title, $test_status, $response);	
@@ -1483,15 +2164,15 @@ printLabel($toc_keys[8], "[*****TESTING USERS******]");
 #Create invalid username
 	$title = "\n\n [CREATE user with invalid name :'".$invalid_user_name."', as ADMIN] \n";
 	$response = $wotkit_client->createUser("admin", $invalid_name_user_input);
-	$test_status = $wotkit_client->checkHTTPcode(500);
-	$problem = checkError($response['data'], "'username': rejected value");
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'invalid', '"username"');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create invalid user with missing property
 	$title = "\n\n [CREATE user with missing properties, as ADMIN] \n";
 	$response = $wotkit_client->createUser("admin", $missing_property_user_input);
-	$test_status = $wotkit_client->checkHTTPcode(500);
-	$problem = checkError($response['data'], "'lastname': rejected value");
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'invalid', '"lastname"');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create user 
@@ -1621,7 +2302,7 @@ printLabel($toc_keys[10], "[*****TESTING STATS******]");
 
 #Query stats
 	$title = "\n\n [QUERY stats with NO CREDENTIALS] \n";
-	$response = $wotkit_client->getNews();
+	$response = $wotkit_client->getStats();
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, true, $title, $test_status, $response);
 
@@ -1653,19 +2334,42 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 	$problem = checkTagsOrSensors($response['data'], array('canada', 'data', 'vancouver', 'edmonton', 'winnipeg'));
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);	
 	
-#Query all tags for private sensors
+#Query all tags for visibility=private sensors
 	$private_tags = 1;
 	$expected = 3;
 	$title = "\n\n [QUERY tags for PRIVATE sensors] \n";
-	$response = $wotkit_client->getTags(null, true);
+	$response = $wotkit_client->getTags(null, "PRIVATE");
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array('canada', 'data','winnipeg'));
-	displayTestResults($problem, false, $title, $test_status, $response, $expected);	
+	displayTestResults($problem, false, $title, $test_status, $response, $expected);
+
+#Query all tags for sensors visibility=organization (although not a member of one)
+	$expected = 0;
+	$visual_check = false;
+	$title = "\n\n [QUERY tags for ORGANIZATION sensors] \n";
+	$response = $wotkit_client->getTags(null, "ORGANIZATION");
+	$test_status = $wotkit_client->checkHTTPcode();
+	if ($org_sensors > 0){
+		$visual_check = true;
+		$expected = null;
+	}
+	displayTestResults(null, $visual_check, $title, $test_status, $response, $expected);	
+	
+#Query all tags for visibility=public sensors
+	$title = "\n\n [QUERY tags for PUBLIC sensors (ASSUMES returned value is the correct number of tags)] \n";
+	$response = $wotkit_client->getTags(null, "PUBLIC");
+	$public_tags = count($response['data']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	if ($public_tags == 4)
+		$problem = checkTagsOrSensors($response['data'], array('canada', 'data','edmonton', 'vancouver'));
+	else
+		$problem = null;
+	displayTestResults($problem, true, $title, $test_status, $response, $public_tags);
 	
 #Query tags for sensors with specific text
 	$expected = 3; 
-	$title = "\n\n [QUERY tags for sensors with TEXT=api-data-test-2] \n";
-	$response = $wotkit_client->getTags(null, null, "api-data-test-2", null, null, null, null);
+	$title = "\n\n [QUERY tags for sensors with TEXT=".$existing_data_sensor[1]."] \n";
+	$response = $wotkit_client->getTags(null, null, $existing_data_sensor[1], null, null, null, null);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array('canada', 'data','edmonton'));
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);
@@ -1736,13 +2440,13 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 	
 #Query all, with no credentials
 	$title = "\n\n [QUERY ALL tags, with NO CREDENTIALS] \n";
-	$expected = $all_tags - $private_tags;
+	$expected = $public_tags;
 	$response = $wotkit_client->getTags("all", null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $expected);	
 
 #Query all, limit 2, with no credentials
-	$title = "\n\n [QUERY ALL tags, with LIMIT=".$limit." and NO CREDENTIALS] \n";
+	$title = "\n\n [QUERY ALL tags, with LIMIT=".$limit.", with NO CREDENTIALS] \n";
 	$limit = 2;
 	$response = $wotkit_client->getTags("all", null, null, null, null, $limit, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1758,7 +2462,7 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 #Query private, with no credentials
 	$title = "\n\n [QUERY tags for PRIVATE sensors, with NO CREDENTIALS] \n";
 	$expected = 0;
-	$response = $wotkit_client->getTags(null, true, null, null, null, null, null, $public);
+	$response = $wotkit_client->getTags(null, "PRIVATE", null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $expected);	
 
@@ -1785,17 +2489,19 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);
 
 
-
-//Organizations	
+//ORGANIZATIONS	
 printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 
 #Query all organizations
-	$expected = 1;
-	$title = "[QUERY all organizations]";
+	$title = "[QUERY all organizations (ASSUMES correct number returned)]";
 	$response = $wotkit_client->getOrganizations(null);
+	$organizations = count($response['data']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkTagsOrSensors($response['data'][0]['name'], array('sensetecnic'));
-	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+	if ($organization == 1)
+		$problem = checkTagsOrSensors(array($response['data'][0]), array('sensetecnic'));
+	else 
+		$problem = null;
+	displayTestResults($problem, true, $title, $test_status, $response, $organizations, true);
 
 #Create new organization using mandatory fields 
 	$title = "[CREATE new organization: '".$new_org_mandatory['name']."' (using mandatory fields), as ADMIN]";
@@ -1822,23 +2528,29 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [CREATE new organization INVALID NAME, as ADMIN] \n";
 	$response = $wotkit_client->createOrganization("admin", $new_org_invalid_name);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response["data"], "invalid name");
+	$problem = checkError($response["data"], "invalid", '"name"');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Create organization with missing required field, longName
 	$title = "\n\n [CREATE new organization MISSING required field (longName), as ADMIN] \n";
 	$response = $wotkit_client->createOrganization("admin", $new_org_missing_longname);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response["data"], "invalid longName");
+	$problem = checkError($response["data"], "invalid", '"longName"');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query all organizations
-	$expected = 2;
+	$expected = $organizations + 1;
+	$visual_check=false;
 	$title = "\n\n [QUERY all organizations] \n";
 	$response = $wotkit_client->getOrganizations();
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'][0], $new_org_mandatory);
-	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+	if ($expected == 2)
+		$problem = checkTagsOrSensors(array($response['data'][0],$response['data'][1]) , array('sensetecnic', $new_org_mandatory['name']));
+	else{
+		$problem = null;
+		$visual_check = true;
+	}	
+	displayTestResults($problem, $visual_check, $title, $test_status, $response, $expected, true);
 
 #Update non-existent organization 
 	$title = "\n\n [UPDATE non-existent organization, as ADMIN] \n";
@@ -1931,12 +2643,13 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$problem = !( $response['data'][0]['username'] == $added_members[0] );
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);				
 
-#Remove member
+#Remove NON-EXISTENT member
 	$title = "\n\n [REMOVE NON-EXISTENT MEMBER 'tester' from organization: '".$new_org_all['name']."', as ADMIN] \n";
 	$response = $wotkit_client->removeOrganizationMembers("admin", $new_org_all['name'], array($added_members[1]));
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
-
+	##DOESN'T GIVE AN ERROR
+	
 #List members
 	$expected = 1;
 	$title = "\n\n [GET MEMBERS of organization: '".$new_org_all['name']."', as ADMIN] \n";
@@ -1945,6 +2658,27 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$problem = !( $response['data'][0]['username'] == $added_members[0] );
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
 	
+#Create new sensor with org visibility ALTHOUGH non memeber
+	$title = "\n\n [CREATE sensor: '".$org_sensor_input_not_member['name']."' with foreign organzition: '".$org_sensor_input_not_member['organization']."'] \n";
+	$response = $wotkit_client->createSensor($org_sensor_input_not_member);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'invalid', 'not part of this organization');
+	displayTestResults ($problem, false, $title, $test_status, $response);	
+
+#Create new sensor with org visibility with NON EXISTENT org
+	$title = "\n\n [CREATE sensor: '".$org_sensor_input_non_existent['name']."' with non-existent organzition: '".$org_sensor_input_non_existent['organization']."'] \n";
+	$response = $wotkit_client->createSensor($org_sensor_input_non_existent);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'org_name is invalid');
+	displayTestResults ($problem, false, $title, $test_status, $response);	
+
+#Query all organizations 
+	$expected = $organizations + 2;
+	$title = "\n\n [QUERY all organizations] \n";
+	$response = $wotkit_client->getOrganizations();
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults(null, true, $title, $test_status, $response, $expected);
+		
 #Create new sensor with org visibility
 	$title = "\n\n [CREATE sensor: '".$org_sensor_input['name']."' with organzition: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->createSensor($org_sensor_input);
@@ -1956,24 +2690,28 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name']."']\n";
 	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $org_sensor_input);
+	$problem = checkArraysEqual($response['data'][0], $org_sensor_input);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
+#Query sensors by orgs
+	$expected = 1;
+	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name'].",".$new_org_mandatory['name']."']\n";
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name'].", ".$new_org_mandatory['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkArraysEqual($response['data'][0], $org_sensor_input);
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
+	
 #Query sensors by org, with NO CREDENTIALS
 	$expected = 0;
+	$public = true;
 	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name']."', with NO CREDENTIALS]\n";
-	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name'], true);
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name'], null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected, true);	
+	$public = false;
 
-#Delete sensor with org visibility
-	$title = "\n\n [DELETE sensor: '".$org_sensor_input['name']."'] \n";
-	$response = $wotkit_client->deleteSensor($org_sensor_input['name']);
-	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults (null, false, $title, $test_status, $response);
-	
 #Query all organizations 
-	$expected = 3;
+	$expected = $organizations + 2;
 	$title = "\n\n [QUERY all organizations] \n";
 	$response = $wotkit_client->getOrganizations();
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1988,7 +2726,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);
 
 #Query organizations by offset
-	$expected = 2;
+	$expected = $organizations + 2 - 1;
 	$title = "\n\n [QUERY organizations with OFFSET=1] \n";
 	$response = $wotkit_client->getOrganizations(null, null, null, 1);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -2012,7 +2750,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
-
+		
 #Delete non-existent organization
 	$title = "\n\n [DELETE NON-EXISTENT organization: '".$new_org_all['name']."', as ADMIN] \n";
 	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
@@ -2021,13 +2759,34 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query non-existent organization
-	$expected = 1;
 	$title = "\n\n [QUERY NON-EXISTENT organization: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], "No organization", "No organization");
-	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
+	displayTestResults($problem, false, $title, $test_status, $response);
 
+#Query sensors by orgs
+	$expected = 1;
+	$title = "\n\n [QUERY sensor: '".$org_sensor_input['name']."']\n";
+	$response = $wotkit_client->getSensors($org_sensor_input['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = !($response['data']['name'] == $org_sensor_input['name']);
+	if (!$problem)
+		$problem = !($response['data']['visibility'] == "PUBLIC");
+	
+#Delete sensor with org visibility
+	$title = "\n\n [DELETE sensor: '".$org_sensor_input['name']."'] \n";
+	$response = $wotkit_client->deleteSensor($org_sensor_input['name']);
+	$test_status = $wotkit_client->checkHTTPcode();
+	displayTestResults (null, false, $title, $test_status, $response);	
+
+#Query sensors by orgs
+	$expected = 1;
+	$title = "\n\n [QUERY deleted sensor: '".$org_sensor_input['name']."']\n";
+	$response = $wotkit_client->getSensors($org_sensor_input['name']);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], "No sensor", "not in the database");
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 
 
 //PUBLIC FUNCTIONS
@@ -2038,26 +2797,26 @@ $public = true;
 #Query for multiple sensors
 	$title = "\n\n [QUERY PUBLIC sensors, LIMIT=5 (with NO CREDENTIALS)]\n";
 	$expected = 5;
-	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, null, $public );
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, 5, null, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $expected);
 
 #Query 'api-client-test-sensor'
 #Query a SINGLE sensor that DOES exist
 	$title = "\n\n [QUERY PUBLIC, existing sensor: '".$existing_data_sensor_full[0]."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($existing_data_sensor_full[0], null, null, null, null, null, null, null, null, null, $public );
+	$response = $wotkit_client->getSensors($existing_data_sensor_full[0], null, null, null, null, null, null, null, null, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
 	
 #Query a single, PRIVATE sensor that does exist
 	$title = "\n\n [QUERY PRIVATE, existing sensor: '".$private_unowned_sensor."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($private_unowned_sensor, null, null, null, null, null, null, null, null, null, $public );
+	$response = $wotkit_client->getSensors($private_unowned_sensor, null, null, null, null, null, null, null, null, null, null, $public );
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayTestResults(null, false, $title, $test_status, $response);		
 
 #Query a single, public sensor that DOES NOT exist
 	$title = "\n\n [QUERY NOT-EXISTENT sensor: '".$invalid_sensor_input["name"]."' (with NO CREDENTIALS)]\n";
-	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, null, $public);
+	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(404);
 	$problem = checkError($response['data'], 'No sensor');
 	displayTestResults($problem, false, $title, $test_status, $response);	
@@ -2103,8 +2862,8 @@ $public = true;
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization	WITHOUT CREDENTIALS
-	$expected = 1;
-	$title = "\n\n [QUERY all organizations, with NO CREDENTIALS] \n";
+	$expected = $organizations;
+	$title = "\n\n [QUERY all organizations (with NO CREDENTIALS)] \n";
 	$response = $wotkit_client->getOrganizations(null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $expected, true);
@@ -2112,12 +2871,19 @@ $public = true;
 #Query organization	WITHOUT CREDENTIALS
 	$expected = 5;
 	$org = 'sensetecnic';
-	$title = "\n\n [QUERY all organization: '".$org."', with NO CREDENTIALS] \n";
+	$title = "\n\n [QUERY organization: '".$org."' (with NO CREDENTIALS)] \n";
 	$response = $wotkit_client->getOrganizations(null, $org, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = !(($response['data']['name'] == $org) && ($response['data']['id'] == 1));
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
 
+#QUERY sensor by metadata: single key with exact value
+	$title = "\n\n [QUERY metadata for sensor: '".$existing_data_sensor[1]."' (key and exact value)]\n";
+	$expected = 1;
+	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, null, array("sensor-position"=>"fixed"), $public );
+	$test_status = $wotkit_client->checkHTTPcode();
+	$problem = checkTagsOrSensors($response['data'],array($existing_data_sensor[1])); 
+	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 	
 //RESULTS		
@@ -2132,6 +2898,17 @@ echo '</div>';
 	
 //HELPER FUNCTIONS
 	//Outputs results of test in a formatted fashion
+	/*
+	 * $problem ==> boolean result of any tests run on data; null if no tests run
+	 * $visual_check ==> boolean value indicating whether user should visually inspect that test
+	 * $title ==> string title of test
+	 * $test_status ==> result of checking HTTP codes
+	 * $response ==> wotkit client response
+	 * $expected ==> number of items expected from $response['data']
+	 * $special_case ==> boolean value indicating whether the $response should be formatted in a user-readable way
+			** By default, if $expected != null, $response NOT formatted in a user-readable way
+			   If $special_case == true && $expected != null, $response is formatted in a user-readable way
+	 */
 	function displayTestResults ($problem=null, $visual_check, $title, $test_status, $response, $expected=null, $special_case=false){
 		global $failures;
 		global $test_count;
@@ -2217,7 +2994,7 @@ echo '</div>';
 		if ( $expected == NULL || $special_case )
 			echo'<pre>'.print_r($response['data'], true).'</pre>';//For a more readable response
 		else{
-			//SPECIAL CASE - assumed multiple results and readable response unnecessary
+			//assumes multiple results so readable response unnecessary
 			$data_long=json_encode($response['data'], true);
 			echo $data_long; 
 		}
@@ -2238,7 +3015,7 @@ echo '</div>';
 			echo '<a name="'.$key.'"><h3>'.$title.'</h3></a>'; 
 	}
 	
-	//Checks the actual array values contain the same fields as in the desired array
+	//Checks the common fields between the actual array and the desired array are equal
 	function checkArraysEqual($actual, $desired){
 		if ( $actual == NULL || $desired == NULL || 
 		     $actual==""     || $desired == "" || 
@@ -2263,8 +3040,14 @@ echo '</div>';
 							if ($actual_timestamp != $desired_timestamp)
 								$problem = true;
 						}else{
-							if (!in_array($actual[$key][$nested_key], $desired[$key]))
-								$problem = true;
+							if ($key == "metadata"){
+								if($actual[$key][$nested_key] != $desired[$key][$nested_key])
+									$problem = true;
+								else{
+									if (!in_array($actual[$key][$nested_key], $desired[$key]))
+										$problem = true;
+								}
+							}
 						}
 					}
 				}else{
@@ -2324,7 +3107,7 @@ echo '</div>';
 		if ( !stristr($error['error']['message'], $keyword) )
 			$problem = true;
 		if ($developerKeyword != null)
-			if ( !stristr($error['error']['developerMessage'], $developerKeyword) )
+			if ( !stristr($error['error']['developerMessage'][0], $developerKeyword) )
 				$problem = true;
 	
 		return $problem;

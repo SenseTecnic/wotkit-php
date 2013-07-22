@@ -55,7 +55,7 @@ class wotkit_client {
 	private function obtainAccessToken (){
 		$code = $_GET['code'];
 		$accessToken = "none";
-		$ch = curl_init();
+		//$ch = curl_init();
 		if(isset($code)) {
 			// try to get an access token
 			$url = $this->oauthTokenURL;
@@ -68,6 +68,7 @@ class wotkit_client {
 					);
 			
 			$data = $this->ArraytoNameValuePairs ($params);
+			//$data = http_build_query($params);
 			$this->accessToken = "setting";
 			$response = $this->processRequest($url, "POST", $data, false);
 			$json = json_decode($response['data']);
@@ -137,7 +138,8 @@ class wotkit_client {
 		$this->expected_http_code = 200; //documentation said 204, but always get 200....
 		$this->hasParameters = false;
 		
-		$message = $this->ArraytoNameValuePairs($message);
+		//$message = $this->ArraytoNameValuePairs($message);
+		$message = http_build_query($message);
 		$response = $this->processRequest("sensors/".$sensor."/message", "POST", $message, false, $public, $special_user);
 		//do not JSON decode to save time
 		return $response;
@@ -161,7 +163,8 @@ class wotkit_client {
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 	
-		$sensor_input = $this->ArraytoJSON($data_array);
+		//$sensor_input = $this->ArraytoJSON($data_array);
+		$sensor_input = json_encode($data_array);
 		$response = $this->processRequest("sensors", "POST", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -173,7 +176,8 @@ class wotkit_client {
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 		
-		$sensor_input = $this->ArraytoJSONList($multi_dim_array);
+		//$sensor_input = $this->ArraytoJSONList($multi_dim_array);
+		$sensor_input = json_encode($multi_dim_array);
 		$response = $this->processRequest("sensors", "PUT", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -183,16 +187,18 @@ class wotkit_client {
 	/* getSensors()
 	 * public = true  => do not supply any credentials
 	 */
-	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $private=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $orgs=NULL, $public=false) 
+	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $visibility=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $orgs=NULL, $metadata=NULL, $public=false) 
 	{	$this->expected_http_code = 200;
 		
 		$url_string = "sensors";
 		
 		if ($sensor == NULL){
-			$params = array("scope" => $scope, "active" => $active, "private" => $private, 
+			$params = array("scope" => $scope, "active" => $active, "visibility" => $visibility, 
 							"tags" => $tags, "text" => $text, "offset" => $offset, "limit" => $limit,
-							"location" => $this->NWSELocationBox($location), "orgs" => $orgs);
-			$param_string = $this->ArraytoNameValuePairs($params);
+							"location" => $this->NWSELocationBox($location), "orgs" => $orgs, 
+							"metadata"=>$this->formatMetadata($metadata) );
+			//$param_string = $this->ArraytoNameValuePairs($params);
+			$param_string = http_build_query($params);
 			
 			if (empty($param_string))
 				$this->hasParameters = false;
@@ -239,7 +245,8 @@ class wotkit_client {
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		
-		$updated_sensor_input = $this->ArraytoJSON($data_array);
+		//$updated_sensor_input = $this->ArraytoJSON($data_array);
+		$updated_sensor_input = json_encode($data_array);
 		$response = $this->processRequest("sensors/".$sensor, "PUT", $updated_sensor_input);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -327,7 +334,8 @@ class wotkit_client {
 		$this->hasParameters = false;
 		
 		$field = $data_array[name];
-		$updated_sensor_field = $this->ArraytoJSON($data_array);
+		//$updated_sensor_field = $this->ArraytoJSON($data_array);
+		$updated_sensor_field = json_encode($data_array);
 		$response = $this->processRequest( "sensors/".$sensor."/fields/".$field, "PUT", $updated_sensor_field);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -360,7 +368,8 @@ class wotkit_client {
 		$this->expected_http_code = 200;
 		$url_string = "data";
 		
-		$param_string = $this->ArraytoNameValuePairs($params);
+		//$param_string = $this->ArraytoNameValuePairs($params);
+		$param_string = http_build_query($params);
 		if (empty($param_string))
 			$this->hasParameters = false;
 		else{
@@ -395,7 +404,8 @@ class wotkit_client {
 		
 		$params = array( "timestamp" => $timestamp, "value" => $value, 
 						 "lat" => $lat, "lng" => $lng, "message" => $message );
-		$sensor_data = $this->ArraytoNameValuePairs($params);	
+		//$sensor_data = $this->ArraytoNameValuePairs($params);	
+		$sensor_data = http_build_query($params);	
 		$response = $this->processRequest( "sensors/".$sensor."/data", "POST", $sensor_data, false, $public);
 		$response['data'] = json_decode($response['data'], true);
 		
@@ -412,9 +422,11 @@ class wotkit_client {
 		$url_string = "sensors/".$sensor."/data";
 		
 		if ($JSON)
-			$sensor_data = $this->ArraytoJSON($data_array);
+			//$sensor_data = $this->ArraytoJSON($data_array);
+			$sensor_data = json_encode($data_array);
 		else
-			$sensor_data = $this->ArraytoNameValuePairs($data_array);
+			//$sensor_data = $this->ArraytoNameValuePairs($data_array);
+			$sensor_data = http_build_query($data_array);
 		$response = $this->processRequest($url_string, "POST", $sensor_data, $JSON);
 		$response['data'] = json_decode($response['data'], true);
 		
@@ -430,7 +442,8 @@ class wotkit_client {
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		
-		$sensor_data = $this->ArraytoJSONList($multi_dim_array);
+		//$sensor_data = $this->ArraytoJSONList($multi_dim_array);
+		$sensor_data = json_encode($multi_dim_array);
 		$response = $this->processRequest("sensors/".$sensor."/data", "PUT", $sensor_data);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -456,7 +469,8 @@ class wotkit_client {
 		$params = array("start" => $start, "end" => $end, "after" => $after, 
 						"afterE" => $afterE, "before" => $before, "beforeE" => $beforeE,
 						"reverse"=> $reverse);
-		$param_string = $this->ArraytoNameValuePairs($params); 	 
+		//$param_string = $this->ArraytoNameValuePairs($params);
+		$param_string = http_build_query($params); 		
 		if(empty($param_string))
 			$this->hasParameters = false;
 		else{
@@ -516,7 +530,8 @@ class wotkit_client {
 		if ($user == NULL){
 			$params = array("text" => $text, "reverse" => $reverse, "offset" => $offset, 
 							"limit" => $limit );
-			$param_string = $this->ArraytoNameValuePairs($params);
+			//$param_string = $this->ArraytoNameValuePairs($params);
+			$param_string = http_build_query($params);
 			if(empty($param_string))
 				$this->hasParameters = false;
 			else{
@@ -539,7 +554,8 @@ class wotkit_client {
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 	
-		$user_input = $this->ArraytoJSON($user_array);
+		//$user_input = $this->ArraytoJSON($user_array);
+		$user_input = json_encode($user_array);
 		$response = $this->processRequest( "users", "POST", $user_input, 1, false, $special_user);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;		
@@ -549,7 +565,8 @@ class wotkit_client {
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		
-		$updated_user_input = $this->ArraytoJSON($user_array);
+		//$updated_user_input = $this->ArraytoJSON($user_array);
+		$updated_user_input = json_encode($user_array);
 		$response = $this->processRequest("users/".$user, "PUT", $updated_user_input, 1, false, $special_user);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
@@ -577,7 +594,8 @@ class wotkit_client {
 			
 			if (empty($org_name)){
 				$params = array("text"=>$text, "offset"=>$offset, "limit"=>$limit);
-				$param_string = $this->ArraytoNameValuePairs($params);
+				//$param_string = $this->ArraytoNameValuePairs($params);
+				$param_string = http_build_query($params);
 				if (empty($param_string))
 					$this->hasParameters = false;
 				else{
@@ -597,7 +615,8 @@ class wotkit_client {
 		public function createOrganization($special_user=null, $new_org){
 			$this->expected_http_code = 201;
 			
-			$new_org_data = $this->ArraytoJSON($new_org);
+			//$new_org_data = $this->ArraytoJSON($new_org);
+			$new_org_data = json_encode($new_org);
 			$response = $this->processRequest ("orgs", "POST", $new_org_data, 1, false, $special_user);
 			$response['data'] = json_decode($response['data'], true);
 			return $response;
@@ -606,7 +625,8 @@ class wotkit_client {
 		public function updateOrganization($special_user=null, $org_name, $updated_org){
 			$this->expected_http_code = 204;
 			
-			$updated_org_data = $this->ArraytoJSON($updated_org);
+			//$updated_org_data = $this->ArraytoJSON($updated_org);
+			$updated_org_data = json_encode($updated_org);
 			$response = $this->processRequest ("orgs/".$org_name, "PUT", $updated_org_data, 1, false, $special_user);
 			$response['data'] = json_decode($response['data'], true);
 			return $response;
@@ -677,13 +697,14 @@ class wotkit_client {
 	/* getTags()
 	 * public = true  => do not supply any credentials
 	 */
-	public function getTags($scope=NULL, $private=NULL, $text=NULL, $active=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false){
+	public function getTags($scope=NULL, $visibility=NULL, $text=NULL, $active=NULL, $offset=NULL, $limit=NULL, $location=NULL, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = true;
-		$params = array("scope" => $scope, "private" => $private, "text" => $text, "active"=> $active, 
+		$params = array("scope" => $scope, "visibility" => $visibility, "text" => $text, "active"=> $active, 
 						"offset" => $offset, "limit" => $limit, "location" => $this->NWSELocationBox($location) );
 		
-		$url_string = "tags?".$this->ArraytoNameValuePairs($params);
+		//$url_string = "tags?".$this->ArraytoNameValuePairs($params);
+		$url_string = "tags?".http_build_query($params);
 
 		$response = $this->processRequest($url_string, "GET", null, false, $public);
 		$response['data'] = json_decode($response['data'], true);
@@ -846,8 +867,7 @@ class wotkit_client {
 			
 			if ($key == "tags"){
 				$contains_tags = true;
-			}
-			else{
+			}else{
 				if(is_numeric($data_array[$key])==true){
 					$sensor_input .='"'.$key.='":'.$data_array[$key];
 				}
@@ -888,6 +908,22 @@ class wotkit_client {
 	
 		$location_box = $location[0].",".$location[1].":".$location[2].",".$location[3];
 		return $location_box;
+	}
+	
+	private function formatMetadata ($metadata){
+		if ( $metadata == null || empty($metadata) )
+			return null;
+		$metadataString = "";
+		foreach ( array_keys($metadata) as $key ){
+			$metadataString .= $key;
+			if ( empty($metadata[$key]) or $metadata[$key]== null)
+				$metadataString .=';';
+			else
+				$metadataString .=':'.$metadata[$key].';';
+		}
+		$metadataString = substr($metadataString, 0, -1);
+		echo "Metadata searched is: ".$metadataString;	
+		return $metadataString;
 	}
 }
 ?>
