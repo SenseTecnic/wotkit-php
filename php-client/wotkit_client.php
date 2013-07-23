@@ -2,15 +2,15 @@
 
 class wotkit_client {
 
-	//Uses a set key in database with "tester" as owner
+	//A set key in database with "tester" as owner
 	private $key_id = "3bfeb222062cb0a6";
 	private $key_password = "894a1b762806471f";
 	
-	//Uses a set key in database with "tester-admin" as owner
+	//A set key in database with "tester-admin" as owner
 	private $admin_key_id = "9ae8fee004d7385c";
 	private $admin_key_password = "27cb43c11491929b";
 	
-	//Uses Oauth2
+	//Necessary for Oauth2
 	private $client_id;
 	private $client_secret;
 	private $accessToken = 'none';
@@ -67,8 +67,8 @@ class wotkit_client {
 					 "grant_type" => "authorization_code"
 					);
 			
-			$data = $this->ArraytoNameValuePairs ($params);
-			//$data = http_build_query($params);
+			//$data = $this->ArraytoNameValuePairs ($params);
+			$data = http_build_query($params);
 			$this->accessToken = "setting";
 			$response = $this->processRequest($url, "POST", $data, false);
 			$json = json_decode($response['data']);
@@ -85,8 +85,7 @@ class wotkit_client {
 /*	
  *Public Helper Function
  */
-	public function checkHTTPcode( $expected_http_code=NULL, $message=NULL )
-	{
+	public function checkHTTPcode( $expected_http_code=NULL, $message=NULL ){
 		if( $expected_http_code == NULL )	
 			$expected_http_code = $this->expected_http_code;
 		
@@ -132,7 +131,8 @@ class wotkit_client {
 	
 	/* sendActuator()
 	 * public = true  => do not supply any credentials
-	 * special_user (string) => supply credentials for different user (key or basic auth)
+	 * special_user (string) => supply credentials for different user: "admin" (key), "other"(basic authentication)
+	 *
 	 */
 	public function sendActuator($sensor, $message, $public=false, $special_user=null){
 		$this->expected_http_code = 200; //documentation said 204, but always get 200....
@@ -167,8 +167,7 @@ class wotkit_client {
 		$sensor_input = json_encode($data_array);
 		$response = $this->processRequest("sensors", "POST", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
-		return $response;
-		
+		return $response;	
 	}
 	
 	public function createMultipleSensor($multi_dim_array){
@@ -181,14 +180,14 @@ class wotkit_client {
 		$response = $this->processRequest("sensors", "PUT", $sensor_input);	
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
-		
 	}
 	
 	/* getSensors()
 	 * public = true  => do not supply any credentials
 	 */
-	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $visibility=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $orgs=NULL, $metadata=NULL, $public=false) 
-	{	$this->expected_http_code = 200;
+	public function getSensors($sensor=NULL, $scope=NULL, $active=NULL, $visibility=NULL, $tags=NULL, $text=NULL, $offset=NULL, $limit=NULL, $location=NULL, $orgs=NULL, $metadata=NULL, $public=false)
+	{
+		$this->expected_http_code = 200;
 		
 		$url_string = "sensors";
 		
@@ -206,8 +205,7 @@ class wotkit_client {
 				$url_string .= "?".$param_string;
 				$this->hasParameters = true;
 			}
-		}
-		else{
+		}else{
 			$url_string .= "/".$sensor;
 			$this->hasParameters = false;
 		}
@@ -327,9 +325,10 @@ class wotkit_client {
 	*/
 	
 	public function updateSensorField($sensor, $data_array){
-	// public function updateSensorField($sensor, $name, $type, $longName=null, $required=null, $units=null){
-		// $data_array = array{"name"=>$name, "type"=>type, "longName"=>longName, 
-							// "required"=>$required, "units=>$units);	
+// public function updateSensorField($sensor, $name, $type, $longName=null, $required=null, $units=null)
+//	{
+// 		$data_array = array{"name"=>$name, "type"=>type, "longName"=>longName, 
+//						    "required"=>$required, "units=>$units);	
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 		
@@ -498,7 +497,6 @@ class wotkit_client {
 				$url_string .= ";out:".$out;
 				if( $outfile != NULL )
 					$url_string .= ";outfile:".$outfile;
-				
 			}
 			
 			if( $tq != NULL )
@@ -725,8 +723,10 @@ class wotkit_client {
 	//				whether input $data is JSON string 
 	//@param bool $public 
 	//				whether not to provide credentials
-	//@param bool $special_user 
-	//				whether to provide a different user's credentials (key or basic auth)
+	//@param str $special_user
+	//				one of : "admin" or "other"
+	//				provide a different user's credentials user: 
+	//				"admin" (key), "other"(basic authentication)
 	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special_user=NULL){
 	
 		//Clearing old data
@@ -812,96 +812,95 @@ class wotkit_client {
 /*
  *Private Helper Functions
  */
-	private function ArraytoNameValuePairs($params){
+	// private function ArraytoNameValuePairs($params){
 		
-		$started = false;
-		$url_string="";
+		// $started = false;
+		// $url_string="";
 		
-		foreach( array_keys($params) as $key){
+		// foreach( array_keys($params) as $key){
 			
-			if ( $params[$key] != NULL){
-				if ( $started == false){
-					$started= true;
-				}	
-				else{
-					$url_string .= "&";
-				}
-				$url_string.= $key."=".$params[$key];
-			}
-		}
+			// if ( $params[$key] != NULL){
+				// if ( $started == false){
+					// $started= true;
+				// }	
+				// else{
+					// $url_string .= "&";
+				// }
+				// $url_string.= $key."=".$params[$key];
+			// }
+		// }
 		
-		return $url_string;
-	}
+		// return $url_string;
+	// }
 	
-	private function ArraytoJSONList($multi_dim_array){
-		$started = false;
-		$sensor_input = "[";
+	// private function ArraytoJSONList($multi_dim_array){
+		// $started = false;
+		// $sensor_input = "[";
 
-		foreach ($multi_dim_array as $data_array){
-			if ( $started == false){
-				$started = true;
-			}	
-			else{
-				$sensor_input.= ',';
-			};
-			$sensor_input .= $this->ArraytoJSON($data_array);
-		};
-		$sensor_input.= ']';
+		// foreach ($multi_dim_array as $data_array){
+			// if ( $started == false){
+				// $started = true;
+			// }	
+			// else{
+				// $sensor_input.= ',';
+			// };
+			// $sensor_input .= $this->ArraytoJSON($data_array);
+		// };
+		// $sensor_input.= ']';
 		
-		return $sensor_input;
-	}
+		// return $sensor_input;
+	// }
 	
-	private function ArraytoJSON($data_array){
+	// private function ArraytoJSON($data_array){
 		
-		$started = false; 
-		$contains_tags = false;
-		$sensor_input = "{";
+		// $started = false; 
+		// $contains_tags = false;
+		// $sensor_input = "{";
 		
-		foreach( array_keys($data_array) as $key){
-			if ( $started == false){
-				$started = true;
-			}	
-			else{
-				$sensor_input.= ',';
-			};
+		// foreach( array_keys($data_array) as $key){
+			// if ( $started == false){
+				// $started = true;
+			// }	
+			// else{
+				// $sensor_input.= ',';
+			// };
 			
-			if ($key == "tags"){
-				$contains_tags = true;
-			}else{
-				if(is_numeric($data_array[$key])==true){
-					$sensor_input .='"'.$key.='":'.$data_array[$key];
-				}
-				else{
-					$sensor_input .='"'.$key.='":"'.$data_array[$key].'"';
-				};
-			};			
+			// if ($key == "tags"){
+				// $contains_tags = true;
+			// }else{
+				// if(is_numeric($data_array[$key])==true){
+					// $sensor_input .='"'.$key.='":'.$data_array[$key];
+				// }
+				// else{
+					// $sensor_input .='"'.$key.='":"'.$data_array[$key].'"';
+				// };
+			// };			
 				
-		}
+		// }
 		
-		if ($contains_tags == true){
-			$started = false;
-			$sensor_input.= '"tags":[';
-			foreach( $data_array[tags] as $tag ){
+		// if ($contains_tags == true){
+			// $started = false;
+			// $sensor_input.= '"tags":[';
+			// foreach( $data_array[tags] as $tag ){
 					
-					if ( $started == false){
-						$started = true;
-					}	
-					else{
-						$sensor_input.= ',';
-					};
-						$sensor_input.= '"'.$tag.'"';
-			}
-			$sensor_input.= ']';								
-		}
-		$sensor_input.= "}";	
+					// if ( $started == false){
+						// $started = true;
+					// }	
+					// else{
+						// $sensor_input.= ',';
+					// };
+						// $sensor_input.= '"'.$tag.'"';
+			// }
+			// $sensor_input.= ']';								
+		// }
+		// $sensor_input.= "}";	
 
-		return $sensor_input;
-	}
+		// return $sensor_input;
+	// }
 	
 	private function NWSELocationBox ($location){
-		if( $location == NULL ){
+		if( $location == NULL )
 			return NULL;
-		}
 		
 		//$corners = array_chunk($location, 2);
 		//$location_box = implode(':', array(implode(',', $corners[0]), implode(',', $corners[1])));
