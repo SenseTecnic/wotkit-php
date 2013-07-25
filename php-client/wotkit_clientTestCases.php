@@ -1924,9 +1924,9 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
 	
 #Querying TEXT
-	$title = "\n\n [Query TEXT api-] \n";
+	$title = "\n\n [Query TEXT api-data] \n";
 	$expected = 3;
-	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, "api-") ;
+	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, "api-data") ;
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $existing_data_sensor[2]));
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected);
@@ -2300,7 +2300,7 @@ printLabel($toc_keys[8], "[*****TESTING USERS******]");
 	displayTestResults ($problem, false, $title, $test_status, $response);	
 
 	
-	
+
 //NEWS
 printLabel($toc_keys[9], "[*****TESTING NEWS******]");	
 
@@ -2747,8 +2747,8 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 
 #Query organizations by TEXT
 	$expected = 2;
-	$title = "\n\n [QUERY organizations with text 'test'] \n";
-	$response = $wotkit_client->getOrganizations(null, null, 'test');
+	$title = "\n\n [QUERY organizations with text 'test-organiz'] \n";
+	$response = $wotkit_client->getOrganizations(null, null, 'test-organiz');
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = !(($response['data'][0]['name'] == $new_org_all['name'])&&($response['data'][1]['name'] == $new_org_mandatory['name']));
 	displayTestResults($problem, false, $title, $test_status, $response, $expected);
@@ -2923,7 +2923,7 @@ $public = true;
 	$title = "\n\n [QUERY organization: '".$org."' (with NO CREDENTIALS)] \n";
 	$response = $wotkit_client->getOrganizations(null, $org, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = !(($response['data']['name'] == $org) && ($response['data']['id'] == 1));
+	$problem = !(($response['data']['name'] == $org));
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
 
 #QUERY sensor by metadata: single key with exact value

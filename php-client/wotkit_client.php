@@ -586,7 +586,7 @@ class wotkit_client {
 		/* getOrganizations()
 		 * public = true  => do not supply any credentials
 		 */
-		public function getOrganizations($special_user=null, $org_name=null, $text=null, $offset=null, $limit=null, $public=false){
+		public function getOrganizations($special_user=null, $org_name=null, $text=null, $offset=null, $limit=NULL, $public=false){
 			$this->expected_http_code = 200;
 			$url_string = "orgs";
 			
