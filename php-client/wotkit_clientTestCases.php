@@ -240,7 +240,7 @@ $test_count = 0;
 	$new_org_missing_longname = array("name"=>"invalid-organization");	
 	
 	//updated org inputs
-	$updated_org_longName = array("longName"=>"ONLY FIELD NOT NULL");
+	$updated_org_longName = array("longName"=>"New LongName; no other fields touched");
 	
 	$updated_org_name = array(
 	"name"=>"updated-test-organiztion", 
@@ -331,7 +331,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkArraysEqual($response['data'],array($generic_sensor=>true,$additional_generic_sensor=>true));
 		displayTestResults ($problem, false, $title, $test_status, $response, $expected);
-
+	
 	#Create TWO EXISTING sensors 'api-client-test-sensor' & 'api-client-test-sensor_additional'
 	#Create MULTIPLE existing sensors	
 		$title="\n\n [CREATE multiple EXISTING sensors: '".$generic_sensor."' & '".$additional_generic_sensor."'] \n";
@@ -466,7 +466,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 	
 #Query created 'api-client-test-sensor'
 #Check for a SINGLE updated sensor that DOES exist
-	echo 'Note: "visibility", "latitude" & "longitude" fields have been overwritten.';
+	echo 'Note:"latitude" & "longitude" fields have NOT been overwritten.';
 	$title = "\n\n [QUERY created '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors ($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -1112,7 +1112,15 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 		$response = $wotkit_client->getSensors($generic_sensor);
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkArraysEqual($response['data'],$new_sensor_input); 
-		displayTestResults ($problem, false, $title, $test_status, $response);			
+		displayTestResults ($problem, false, $title, $test_status, $response);		
+
+	#Get subscribed sensors
+		$title = "\n\n [QUERY subscribed sensors]\n";
+		$expected = 3;
+		$response = $wotkit_client->getSubscribedSensors();
+		$test_status = $wotkit_client->checkHTTPcode();
+		$problem = checkTagsOrSensors($response['data'], array($existing_data_sensor[0], $existing_data_sensor[1], $unowned_sensor_short));
+		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 	#Subscribe to sensor
 		$title = "\n\n [SUBSCRIBE to sensor: '".$generic_sensor."']\n";
@@ -2039,7 +2047,7 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 	
 	
-	
+
 //AGGREGATE SENSOR DATA
 printLabel($toc_keys[6], "[*****TESTING QUERYING AGGREGATE SENSOR DATA******]");
 
@@ -2172,7 +2180,7 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	$test_status = $wotkit_client->checkHTTPcode(401);
 	displayTestResults (null, false, $title, $test_status, $response);	
 
-
+	
 	
 //USERS
 printLabel($toc_keys[8], "[*****TESTING USERS******]");	
@@ -2612,17 +2620,18 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);	
 
 #Update existing organization longName only
+	echo("Note: Other fields are NOT overwritten.");
 	$title = "\n\n [UPDATE longName of existing organization: '".$new_org_all['name']."', as ADMIN] \n";
 	$response = $wotkit_client->updateOrganization("admin", $new_org_all['name'], $updated_org_longName);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization	
-	$expected = 3;
+	$expected = 5;
 	$title = "\n\n [QUERY organization: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'], $updated_org_longName);
+	$problem = !($response['data']['longName'] == $updated_org_longName['longName']);
 	displayTestResults($problem, false, $title, $test_status, $response, $expected, true);
 	
 #List members
@@ -2934,6 +2943,7 @@ $public = true;
 	$problem = checkTagsOrSensors($response['data'],array($existing_data_sensor[1])); 
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
+	
 	
 //RESULTS		
 printLabel($toc_keys[14], "[*****RESULTS******] ");

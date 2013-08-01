@@ -5,7 +5,7 @@ class wotkit_client {
 	//A set key in database with "tester" as owner
 	private $key_id = "3bfeb222062cb0a6";
 	private $key_password = "894a1b762806471f";
-	
+
 	//A set key in database with "tester-admin" as owner
 	private $admin_key_id = "9ae8fee004d7385c";
 	private $admin_key_password = "27cb43c11491929b";
@@ -410,7 +410,7 @@ class wotkit_client {
 		
 		//Allows time for the new Sensor Data to be processed before moving on. 
 		//Without sleep, you may try to query data before it has been processed. 
-		sleep(1); 
+		sleep(2); 
 		
 		return $response;
 	}
@@ -431,7 +431,7 @@ class wotkit_client {
 		
 		//Allows time for the new Sensor Data to be processed before moving on. 
 		//Without sleep, you may try to query data before it has been processed. 
-		sleep(1); 
+		sleep(2); 
 
 		return $response;
 	}
