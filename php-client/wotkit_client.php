@@ -727,7 +727,7 @@ class wotkit_client {
 	//				one of : "admin" or "other"
 	//				provide a different user's credentials user: 
 	//				"admin" (key), "other"(basic authentication)
-	private function processRequest ($url, $request, $data=null, $isJSON=1, $public=false, $special_user=NULL){
+	private function processRequest ($url, $method, $data=null, $isJSON=1, $public=false, $special_user=NULL){
 	
 		//Clearing old data
 		$this->response = array();
@@ -783,16 +783,16 @@ class wotkit_client {
 			//Necessary for these actions: Create New Sensor, Update Sensor
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json")); 
 		
-		if ($request == "PUT")
+		if ($method == "PUT")
 			//Update Sensor or Sensor Data
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
 		
-		if ($request == "DELETE")
+		if ($method == "DELETE")
 			//Delete Sensor
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 
-		if ($request != "GET" and $data!=NULL){
-			//'Postfields' for POST or PUT requests
+		if ($method != "GET" and $data!=NULL){
+			//'Postfields' for POST or PUT methods
 			curl_setopt($ch, CURLOPT_POST, TRUE);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		}
@@ -804,8 +804,18 @@ class wotkit_client {
 		#Closing cURL
 		curl_close($ch);
 		
-		$response = array("permission"=>$permission, "url"=>$url, "request"=>$request,  
-						  "code"=>$this->response_info[http_code], "data"=>$this->response);
+		$response = array(
+				"permission"=>$permission, 
+				"url"=>$url, 
+				"method"=>$method,
+				"request" => array(
+						"headers" => $this,
+						"body"    => $data
+					),
+				"code"=>$this->response_info[http_code], 
+				"data"=>$this->response
+			);
+
 		return $response;
 	}
 	
@@ -925,4 +935,3 @@ class wotkit_client {
 		return $metadataString;
 	}
 }
-?>

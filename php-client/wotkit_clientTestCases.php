@@ -20,6 +20,7 @@
  **/
 require_once('wotkit_client.php');
 require_once('wotkit_clientConfig.php');
+require_once('helper_functions.php');
 
 //SERVER & AUTHENTICATION
 $wotkit_client = new wotkit_client(BASE_URL, CLIENT_ID, CLIENT_SECRET);
@@ -112,7 +113,10 @@ $test_count = 0;
 	$sensor_input_minimum_fields = array(
 	"name"=>"min-fields-sensor", 
 	"description"=>"api client test sensor additional desc", 
-	"longName"=>"api client test sensor additional long");
+  "longName"=>"api client test sensor additional long",
+  "latitude"=> 5,
+  "longitude"=> 5,
+  "visibility"=> "PUBLIC");
 	
 	//invalid sensor inputs
 	$invalid_sensor_input = array(
@@ -320,7 +324,7 @@ echo '</div>';
 
 //SENSORS
 
-printLabel($toc_key[0],"[*****TESTING SENSORS******]");
+printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 
 	printLabel(null,"[....testing creation of multiple sensors.......]", true);
 	#Create TWO sensors: 'api-client-test-sensor' & 'api-client-test-sensor_additional' 
@@ -346,7 +350,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [CREATE an INVALID sensor by excluding longName - a mandatory field] \n";
 		$response = $wotkit_client->createMultipleSensor(array($invalid_sensor_input), true);	
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'invalid', 'longName');
+		$problem = checkError($response['data'], 'validation problems', 'longName');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Query  'api-client-test-sensor'
@@ -492,7 +496,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 		$test_status = $wotkit_client->checkHTTPcode(400);
 		$problem = checkError($response['data'], 'Missing required field');
 		displayTestResults ($problem, false, $title, $test_status, $response);
-		
+
 	#Update default field of 'api-client-test-sensor'	
 		$title = "\n\n [UPDATE protected subfield of the default field 'value' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_update_protected_field);
@@ -621,7 +625,8 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Query private sensor 'sensetecnic.api-test-private'
-#Check for a SINGLE PRIVATE sensor 
+#Check for a SINGLE PRIVATE sensor
+	// TODO: Update the build script b/c there are no private unowned sensors at the moment - Ray
 	$title = "\n\n [QUERY private, unowned sensor: '".$private_unowned_sensor."']\n";
 	$response = $wotkit_client->getSensors($private_unowned_sensor);
 	$test_status = $wotkit_client->checkHTTPcode(401);
@@ -918,7 +923,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_invalid_name);
 	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'invalid');
+	$problem = checkError($response['data'], 'Object has validation problems');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 	#Query created 'api-client-test-sensor'
@@ -935,7 +940,7 @@ printLabel($toc_key[0],"[*****TESTING SENSORS******]");
 	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_missing_value);	
 	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'invalid');
+	$problem = checkError($response['data'], 'validation problems');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 	#Query created 'api-client-test-sensor'
@@ -1957,15 +1962,15 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 #Querying LOCATION
 	$title = "\n\n [Query LOCATION = invalid North/South coordinates] \n";
 	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $location_invalid_ns) ;
-	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor', 'smaller than');
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'Bad data query', 'smaller than');
 	displayTestResults ($problem, false, $title, $test_status, $response);	
 	
 #Querying LOCATION
 	$title = "\n\n [Query LOCATION = invalid North coordinate] \n";
 	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $location_invalid_toolarge) ;
-	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor', 'out of bound');
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'Bad data query', 'out of bound');
 	displayTestResults ($problem, false, $title, $test_status, $response);	
 	
 #Querying LOCATION
@@ -2189,14 +2194,14 @@ printLabel($toc_keys[8], "[*****TESTING USERS******]");
 	$title = "\n\n [CREATE user with invalid name :'".$invalid_user_name."', as ADMIN] \n";
 	$response = $wotkit_client->createUser("admin", $invalid_name_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'invalid', '"username"');
+	$problem = checkError($response['data'], 'invalid', 'username');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create invalid user with missing property
 	$title = "\n\n [CREATE user with missing properties, as ADMIN] \n";
 	$response = $wotkit_client->createUser("admin", $missing_property_user_input);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'invalid', '"lastname"');
+	$problem = checkError($response['data'], 'invalid', 'lastname');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Create user 
@@ -2448,15 +2453,15 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 #Query location tags, invalid data
 	$title = "\n\n [QUERY LOCATION=invalid North/South coordinate tags] \n";
 	$response = $wotkit_client->getTags(null, null, null, null, null, null, $location_invalid_ns );
-	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor', 'smaller');
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'Bad data query', 'smaller');
 	displayTestResults($problem, false, $title, $test_status, $response);
 	
 #Query location tags, invalid data
 	$title = "\n\n [QUERY LOCATION=invalid North coordinate tags] \n";
 	$response = $wotkit_client->getTags(null, null, null, null, null, null, $location_invalid_toolarge );
-	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor', 'out of bound');
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response['data'], 'Bad data query', 'out of bound');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 	$public = true;
@@ -2553,14 +2558,14 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [CREATE new organization INVALID NAME, as ADMIN] \n";
 	$response = $wotkit_client->createOrganization("admin", $new_org_invalid_name);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response["data"], "invalid", '"name"');
+	$problem = checkError($response["data"], "invalid", 'name');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Create organization with missing required field, longName
 	$title = "\n\n [CREATE new organization MISSING required field (longName), as ADMIN] \n";
 	$response = $wotkit_client->createOrganization("admin", $new_org_missing_longname);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response["data"], "invalid", '"longName"');
+	$problem = checkError($response["data"], "invalid", 'longName');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query all organizations
@@ -2955,223 +2960,6 @@ else
 echo '<br><br><a href="#">Back to top</a>';	
 echo '</div>';	
 	
-//HELPER FUNCTIONS
-	//Outputs results of test in a formatted fashion
-	/*
-	 * $problem ==> boolean result of any tests run on data; null if no tests run
-	 * $visual_check ==> boolean value indicating whether user should visually inspect that test
-	 * $title ==> string title of test
-	 * $test_status ==> result of checking HTTP codes
-	 * $response ==> wotkit client response
-	 * $expected ==> number of items expected from $response['data']
-	 * $special_case ==> boolean value indicating whether the $response should be formatted in a user-readable way
-			** By default, if $expected != null, $response NOT formatted in a user-readable way
-			   If $special_case == true && $expected != null, $response is formatted in a user-readable way
-	 */
-	function displayTestResults ($problem=null, $visual_check, $title, $test_status, $response, $expected=null, $special_case=false){
-		global $failures;
-		global $test_count;
-		
-		$pass_code = 0; // if http codes match
-		$pass_expected = 1; // if # of expected & # of received match
-		
-		//Check if received HTTP Code was correct
-		if (stristr($test_status,'<b>PASS</b> '))
-			$pass_code = 1;
-		//Determine Expected vs Found Queries Status
-		if($expected != NULL || $expected === 0){
-			$found = count($response['data']);
-			if ( $expected == $found ){
-				$test_status .= '<br><b>PASS</b>';
-			}else{
-				$pass_expected = 0;
-				$test_status .= '<br><font color="red">FAIL</font>.';
-			}			
-			$test_status .=" - Expected ".$expected." = Returned ".$found;
-		}
-		// Check if automated data check passed
-		if($problem == true)
-			$test_status .='<br><font color="red">Automated Data Check FAILED</font>.';
-		if($problem === false)
-			$test_status .='<br>Automated Data Check Passed.';
-		if($problem == null || empty($problem))
-			$problem = false;
-			
-		//Format response	
-		echo '<div class="accordion" id="accordian"'.$test_count.'>';
-		echo '<div class="accordion-group">';
-		echo '<div class="accordion-heading">';
-	
-		if ( $pass_code && $pass_expected && !$problem ){
-			if ($visual_check){
-				echo '<a class="accordion-toggle btn btn-info" data-toggle="collapse" data-parent="#accordion'.$test_count.'" href="#collapse'.$test_count.'">';
-				echo '<i class="icon-flag"></i>';	
-			}else{
-				echo '<a class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion'.$test_count.'" href="#collapse'.$test_count.'">';
-				echo '<i class="icon-ok"></i>';	
-			}
-		}else{
-			echo '<a class="accordion-toggle btn btn-danger" data-toggle="collapse" data-parent="#accordion'.$test_count.'" href="#collapse'.$test_count.'">';
-			echo '<i class="icon-remove icon-white"></i>';
-			$failures ++;
-		}
-		echo "    ".$test_count.'.  '.$title;
-		echo '</a></div>';
-		
-		if ( $pass_code && $pass_expected && !$problem )
-			echo '<div id="collapse'.$test_count.'" class="accordion-body collapse">';
-		else
-			echo '<div id="collapse'.$test_count.'" class="accordion-body collapse in">';
-		
-		
-		echo '<div class="accordion-inner">';	
-		echo '<dl>';
-		
-		//Print HTTP Code Status and EXPECTED status (if exists) and Automated Data Check Status (if exists)
-		echo '<dt class="li-divider">Status:</dt>';
-		echo '<dd class="list">'.$test_status.'</dd>';
-		
-		//Prints authentication used
-		echo '<dt class="li-divider">Permission:</dt>';
-		echo '<dd class="list">'.$response['permission'].'</dd>';
-		
-		//Prints HTTP method and URL
-		echo '<dt class="li-divider">Request:</dt>';
-		echo '<dd class="list">'.$response['request'].': '.$response['url'].'</dd>';
-		
-		//Prints response in collapsible div
-		echo '<dt class="li-divider">Response:</dt>';
-		echo '<dd class="list">';
-		echo '<div class="accordion" id="NestedAccordian"'.$test_count.'>';
-		echo '<div class="accordion-group">';
-		echo '<div class="accordion-heading">';
-        echo '<a class="accordion-toggle" data-toggle="collapse" data-parent="#NestedAccordian'.$test_count.'" href="#NestedCollapse'.$test_count.'">';
-		echo '<h6>HTTP '.$response['code'].'</h6>';
-		echo '</a></div>';
-		echo '<div id="NestedCollapse'.$test_count.'" class="accordion-body collapse">';
-		echo '<div class="accordion-inner">';
-		if ( $expected == NULL || $special_case )
-			echo'<pre>'.print_r($response['data'], true).'</pre>';//For a more readable response
-		else{
-			//assumes multiple results so readable response unnecessary
-			$data_long=json_encode($response['data'], true);
-			echo $data_long; 
-		}
-		echo '</div></div></div></div>';
-		echo '</dd>';
-		echo '</dl>';	
-	
-		echo '</div></div></div></div>';
-
-		$test_count++;
-	}
-	
-	//Outputs headings in a formatted fashion
-	function printLabel($key, $title, $small=false){
-		if( $small )
-			echo '<h5>'.$title.'</h5>'; 
-		else
-			echo '<a name="'.$key.'"><h3>'.$title.'</h3></a>'; 
-	}
-	
-	//Checks the common fields between the actual array and the desired array are equal
-	function checkArraysEqual($actual, $desired){
-		if ( $actual == NULL || $desired == NULL || 
-		     $actual==""     || $desired == "" || 
-			 empty($actual)  || empty($desired) )
-			return true;
-				
-		$problem = false;
-		foreach( array_keys($actual) as $key ){
-			if ($problem)
-				break;
-			if ( array_key_exists($key, $desired) ){
-				if (is_array($actual[$key])){
-					foreach (array_keys($actual[$key]) as $nested_key ){ 
-						if( $nested_key == "timestamp" ){
-							$actual_timestamp = $actual[$key][$nested_key];
-							$desired_timestamp = $desired[$key][$nested_key];
-							if (!is_numeric($actual[$key])) 
-								$actual_timestamp = strtotime($actual[$key][$nested_key])*1000;
-							if (!is_numeric($desired[$key])) 
-								$desired_timestamp = strtotime($desired[$key][$nested_key])*1000;
-
-							if ($actual_timestamp != $desired_timestamp)
-								$problem = true;
-						}else{
-							if ($key == "metadata"){
-								if($actual[$key][$nested_key] != $desired[$key][$nested_key])
-									$problem = true;
-								else{
-									if (!in_array($actual[$key][$nested_key], $desired[$key]))
-										$problem = true;
-								}
-							}
-						}
-					}
-				}else{
-					if ($key == "timestamp"){
-						$actual_timestamp = $actual[$key];
-						$desired_timestamp = $desired[$key];
-						if (!is_numeric($actual[$key])) 
-							$actual_timestamp = strtotime($actual[$key])*1000;
-						if (!is_numeric($desired[$key])) 
-							$desired_timestamp = strtotime($desired[$key])*1000;
-
-						if ($actual_timestamp != $desired_timestamp)
-							$problem = true;
-					}else {
-						if($actual[$key] != $desired[$key])
-							$problem = true;
-					}
-				}
-			}
-		}
-		return $problem;
-	}
-	
-	//Checks past timestamp(ms) is smaller than recent timestamp(ms)
-	function checkDates ($past, $recent){
-		if ( $past == NULL || $recent == NULL || 
-			 $past==""     || $recent == "" || 
-			 empty($past)  || empty($recent) )
-				return true;
-		if (!is_numeric($past)) 
-			$past = strtotime($past)*1000;
-		if (!is_numeric($recent)) 
-			$recent = strtotime($recent)*1000;
-
-		$problem = false; 
-		if ($past > $recent)
-			$problem = true;
-			
-		return $problem;
-	}
-	
-	//Checks tags/sensors have the expected name fields
-	function checkTagsOrSensors ($received, $expected){
-		$problem = false;
-		foreach( $received as $value ){			
-			if (!in_array($value['name'], $expected)){
-				$problem = true;
-				break;
-			}
-		}
-		return $problem;
-	}
-	
-	//Checks error message contains expected keywords
-	function checkError($error, $keyword, $developerKeyword=null){
-		$problem = false; 
-		if ( !stristr($error['error']['message'], $keyword) )
-			$problem = true;
-		if ($developerKeyword != null)
-			if ( !stristr($error['error']['developerMessage'][0], $developerKeyword) )
-				$problem = true;
-	
-		return $problem;
-	}
-
 ?>
 
 </body>
