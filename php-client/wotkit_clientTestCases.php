@@ -1486,19 +1486,20 @@ date_default_timezone_set($old_timezone);
 	$test_status = $wotkit_client->checkHTTPcode(400);
 	$problem = checkError($response['data'], 'Invalid field content', 'expected NUMBER');
 	displayTestResults ($problem, false, $title, $test_status, $response);
-	
+
+// DEPRECATED TEST
 #Update 2nd piece of data from 'api-data-test-3' with INVALID DATA (missing required field)
 #Update 2nd piece of data from existing sensor with INVALID DATA
-	$title = "\n\n [UPDATE 2nd data piece with INVALID DATA (missing required field) for sensor: '".$existing_data_sensor[2]."'] \n";
-	$updated_sensor_data = array(array("timestamp" =>$saved_response[1][timestamp],
-	 "lat"=>100,
-	 "lng"=>100,
-	 "message"=>"updated fields")
-	 );
-	$response = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
-	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'Missing required field', 'value');
-	displayTestResults ($problem, false, $title, $test_status, $response);
+//	$title = "\n\n [UPDATE 2nd data piece with INVALID DATA (missing required field) for sensor: '".$existing_data_sensor[2]."'] \n";
+//	$updated_sensor_data = array(array("timestamp" =>$saved_response[1][timestamp],
+//	 "lat"=>100,
+//	 "lng"=>100,
+//	 "message"=>"updated fields")
+//	 );
+//	$response = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
+//	$test_status = $wotkit_client->checkHTTPcode(204);
+//	$problem = checkError($response['data'], 'Missing required field', 'value');
+//	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Update 2nd piece of data from 'api-data-test-3' with INVALID DATA (data from future)
 #Update 2nd piece of data from existing sensor with INVALID DATA
