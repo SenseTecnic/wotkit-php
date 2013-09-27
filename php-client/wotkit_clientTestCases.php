@@ -2882,7 +2882,7 @@ $public = true;
 	$title = "\n\n [QUERY NOT-EXISTENT sensor: '".$invalid_sensor_input["name"]."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor');
+	$problem = checkError($response['data'], 'No thing');
 	displayTestResults($problem, false, $title, $test_status, $response);	
 	
 #Query sensor data from PUBLIC sensor	
