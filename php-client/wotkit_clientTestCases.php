@@ -494,14 +494,14 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [CREATE new field with INCOMPLETE field information for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_missing_required_subfield);
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'Missing required field');
+		$problem = checkError($response['data'], 'The supplied object is invalid', 'type');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Update default field of 'api-client-test-sensor'	
 		$title = "\n\n [UPDATE protected subfield of the default field 'value' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $invalid_field_update_protected_field);
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'Missing required field', 'Cannot change');
+		$problem = checkError($response['data'], 'The supplied object is invalid', 'longName');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 		
 	#Create new field to 'api-client-test-sensor'	
@@ -590,13 +590,6 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$test_status = $wotkit_client->checkHTTPcode(400);
 		displayTestResults (null, false, $title, $test_status, $response);
 
-	#Delete required "value" field for 'api-client-test-sensor'
-		$title = "\n\n [DELETE required field 'value' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->deleteSensorField ($generic_sensor, "value");
-		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'Missing required field', 'cannot be deleted');
-		displayTestResults ($problem, false, $title, $test_status, $response);
-		
 	#Query mulitple fields for 'api-client-test-sensor'
 		$title = "\n\n [QUERY multiple fields for sensor: '".$generic_sensor."']\n";
 		$expected = 4;
@@ -604,6 +597,24 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message'));
 		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
+
+	#Delete required "value" field for 'api-client-test-sensor'
+#		$title = "\n\n [DELETE required field 'value' for sensor: '".$generic_sensor."']\n";
+#		$response = $wotkit_client->deleteSensorField ($generic_sensor, "value");
+#		$test_status = $wotkit_client->checkHTTPcode(400);
+#		$problem = checkError($response['data'], 'Missing required field', 'cannot be deleted');
+#		displayTestResults ($problem, false, $title, $test_status, $response);
+
+    #Delete all fields which should fail because a single field must remain
+    $title = "\n\n [DELETE all fields sequentially for sensor: '".$generic_sensor."']\n";
+    $wotkit_client->deleteSensorField($generic_sensor, "value");
+    $wotkit_client->deleteSensorField($generic_sensor, "lat");
+    $wotkit_client->deleteSensorField($generic_sensor, "lng");
+    $response = $wotkit_client->deleteSensorField($generic_sensor, "message");
+    $test_status = $wotkit_client->checkHTTPcode(400);
+    $problem = checkError($response['data'], 'Invalid Field Content', 'Cannot delete last field from sensor');
+    displayTestResults($problem, false, $title, $test_status, $response);
+
 
 	printLabel(null, "[.....done testing sensor fields......]", true);
 	//-------------------------------------------------------------//
@@ -736,7 +747,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$test_status = $wotkit_client->checkHTTPcode();
 	$problem = checkTagsOrSensors(array($response['data'][0], $response['data'][1]),array($generic_sensor, $additional_generic_sensor));  
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
-	
+
 	#QUERY sensor by metadata: single key 
 	$title = "\n\n [QUERY metadata for sensor: '".$additional_generic_sensor."' (key only)]\n";
 	$expected = 1;
@@ -1976,7 +1987,7 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	
 #Querying LOCATION
 	$title = "\n\n [Query LOCATION = vancouver] \n";
-	$expected = 23;
+	$expected = 24;
 	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $location_vancouver) ;
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, $expected);	
