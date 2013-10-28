@@ -22,6 +22,8 @@ require_once('wotkit_client.php');
 require_once('wotkit_clientConfig.php');
 require_once('helper_functions.php');
 
+date_default_timezone_set('America/Vancouver'); 
+
 //SERVER & AUTHENTICATION
 $wotkit_client = new wotkit_client(BASE_URL, CLIENT_ID, CLIENT_SECRET);
 
@@ -373,7 +375,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->getSensors($generic_sensor);
 		$test_status = $wotkit_client->checkHTTPcode(404);
-		$problem = checkError($response['data'], 'No sensor');
+		$problem = checkError($response['data'], 'No thing');
 		displayTestResults ($problem, false, $title, $test_status, $response);		
 
 	#Query 'api-client-test-sensor-additional'
@@ -396,7 +398,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [QUERY deleted sensor: '".$additional_generic_sensor."']\n";
 		$response = $wotkit_client->getSensors($additional_generic_sensor);
 		$test_status = $wotkit_client->checkHTTPcode(404);
-		$problem = checkError($response['data'], 'No sensor');
+		$problem = checkError($response['data'], 'No thing');
 		displayTestResults ($problem, false, $title, $test_status, $response);		
 		
 	printLabel(null, "[....done testing creation of multiple sensors.......]", true);
@@ -632,7 +634,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor');
+	$problem = checkError($response['data'], 'No thing');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Query private sensor 'sensetecnic.api-test-private'
@@ -648,7 +650,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$title = "\n\n [DELETE sensor: 'not-real-sensor'] \n";
 	$response = $wotkit_client->deleteSensor( "not-real-sensor");
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No sensor');
+	$problem = checkError($response['data'], 'No thing');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 	
 #Update another user's sensor
@@ -2859,7 +2861,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [QUERY deleted sensor: '".$org_sensor_input['name']."']\n";
 	$response = $wotkit_client->getSensors($org_sensor_input['name']);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], "No sensor", "not in the database");
+	$problem = checkError($response['data'], "No thing", "not in the database");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);	
 
 	
