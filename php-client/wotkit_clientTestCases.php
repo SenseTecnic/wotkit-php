@@ -352,7 +352,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [CREATE an INVALID sensor by excluding longName - a mandatory field] \n";
 		$response = $wotkit_client->createMultipleSensor(array($invalid_sensor_input), true);
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'validation problems', 'longName');
+		$problem = checkError($response['data'], 'validation errors', 'longName');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Query  'api-client-test-sensor'
@@ -375,7 +375,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->getSensors($generic_sensor);
 		$test_status = $wotkit_client->checkHTTPcode(404);
-		$problem = checkError($response['data'], 'No thing');
+		$problem = checkError($response['data'], 'Could not locate this resource.');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Query 'api-client-test-sensor-additional'
@@ -398,7 +398,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		$title = "\n\n [QUERY deleted sensor: '".$additional_generic_sensor."']\n";
 		$response = $wotkit_client->getSensors($additional_generic_sensor);
 		$test_status = $wotkit_client->checkHTTPcode(404);
-		$problem = checkError($response['data'], 'No thing');
+		$problem = checkError($response['data'], 'Could not locate this resource.');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	printLabel(null, "[....done testing creation of multiple sensors.......]", true);
@@ -634,7 +634,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$title = "\n\n [QUERY deleted sensor: '".$generic_sensor."']\n";
 	$response = $wotkit_client->getSensors($generic_sensor);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No thing');
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Query private sensor 'sensetecnic.api-test-private'
@@ -642,7 +642,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	// TODO: Update the build script b/c there are no private unowned sensors at the moment - Ray
 	$title = "\n\n [QUERY private, unowned sensor: '".$private_unowned_sensor."']\n";
 	$response = $wotkit_client->getSensors($private_unowned_sensor);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
 	displayTestResults (null, false, $title, $test_status, $response);
 
 #Delete non-existent sensor 'not-real-sensor'
@@ -650,15 +650,15 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$title = "\n\n [DELETE sensor: 'not-real-sensor'] \n";
 	$response = $wotkit_client->deleteSensor( "not-real-sensor");
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No thing');
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Update another user's sensor
 #Update a sensor you don't own
 	$title = "\n\n [UPDATE another user's sensor: '".$unowned_sensor_full."']\n";
 	$response = $wotkit_client->updateSensor($unowned_sensor_full, $updated_sensor_input_3);
-	$test_status = $wotkit_client->checkHTTPcode(401);
-	$problem = checkError($response['data'], 'Not the owner');
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 
@@ -936,7 +936,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_invalid_name);
 	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'Object has validation problems');
+	$problem = checkError($response['data'], 'Object has validation errors');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Query created 'api-client-test-sensor'
@@ -953,7 +953,7 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 	$invalid_sensor_input_with_metadata = array_merge($new_sensor_input, $sensor_metadata_missing_value);
 	$response = $wotkit_client->updateSensor($generic_sensor, $invalid_sensor_input_with_metadata);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'validation problems');
+	$problem = checkError($response['data'], 'validation errors');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Query created 'api-client-test-sensor'
@@ -1072,15 +1072,15 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 #Subscribe to an already subscribed sensor
 	$title = "\n\n [SUBSCRIBE to already subscribed sensor: '".$existing_data_sensor[2]."']\n";
 	$response = $wotkit_client->subscribeSensor($existing_data_sensor[2]);
-	$test_status = $wotkit_client->checkHTTPcode(401);
-	$problem = checkError($response['data'], 'already subscribed');
+	$test_status = $wotkit_client->checkHTTPcode(403);
+	$problem = checkError($response['data'], 'Cannot perform action');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Subscribed to a private, non-owned sensor
 	$title = "\n\n [SUBSCRIBE to another user's private sensor: '".$private_unowned_sensor."']\n";
 	$response = $wotkit_client->subscribeSensor($private_unowned_sensor);
-	$test_status = $wotkit_client->checkHTTPcode(401);
-	$problem = checkError($response['data'], 'is private');
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Get subscribed sensors
@@ -1100,8 +1100,8 @@ printLabel($toc_keys[1], "[*****TESTING SENSOR SUBSCRIPTIONS******]");
 #Unsubscribe from not subscribed sensor
 	$title = "\n\n [UNSUBSCRIBE from already unsubscribed sensor: '".$existing_data_sensor[2]."']\n";
 	$response = $wotkit_client->unsubscribeSensor($existing_data_sensor[2]);
-	$test_status = $wotkit_client->checkHTTPcode(401);
-	$problem = checkError($response['data'], 'not subscribed');
+	$test_status = $wotkit_client->checkHTTPcode(403);
+	$problem = checkError($response['data'], 'Cannot perform action');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Get subscribed sensors
@@ -1298,7 +1298,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 		$title = "\n\n [POST Name/Value pair invalid data -string to numerical field- to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array);
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'Invalid field content');
+		$problem = checkError($response['data'], 'Object has validation errors');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 		$title = "\n\n [QUERY data from sensor: '".$generic_sensor."']\n";
@@ -1311,7 +1311,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 		$title = "\n\n [POST JSON invalid data -string to numerical field- to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array, true);
 		$test_status = $wotkit_client->checkHTTPcode(400);
-		$problem = checkError($response['data'], 'Invalid field content');
+		$problem = checkError($response['data'], 'Object has validation errors');
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 		$title = "\n\n [QUERY data from sensor: '".$generic_sensor."']\n";
@@ -1375,7 +1375,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	$lng = rand(1,100);
 	$message = "test message #";
 	$response = $wotkit_client->sendSensorData( $unowned_sensor_full,$value, $lat, $lng, $message);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
 	displayTestResults (null, false, $title, $test_status, $response);
 
 #Sending 3 pieces of data to 'api-data-test-3'
@@ -1497,7 +1497,7 @@ date_default_timezone_set($old_timezone);
 	 );
 	$response = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'Invalid field content', 'expected NUMBER');
+	$problem = checkError($response['data'], 'object has validation errors', 'expected NUMBER');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 // DEPRECATED TEST
@@ -1525,7 +1525,7 @@ date_default_timezone_set($old_timezone);
 	 );
 	$response = $wotkit_client->updateSensorData($existing_data_sensor[2], $updated_sensor_data);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'Invalid field content','future');
+	$problem = checkError($response['data'], 'Object has validation errors','future');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Query data from 'api-data-test-3'
@@ -2188,7 +2188,7 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 #Subscribe to PRIVATE actuator you DO NOT own
 	$title = "\n\n [Subscribe to UNOWNED, PRIVATE actuator: '".$private_unowned_sensor."'] \n";
 	$response = $wotkit_client->subscribeActuator($private_unowned_sensor, $actuator_message);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
 	displayTestResults (null, false, $title, $test_status, $response);
 
 #Send message to PRIVATE actuator you DO NOT own
@@ -2196,7 +2196,7 @@ printLabel($toc_keys[7], "[*****TESTING CONTROL OF ACTUATORS******]");
 	$actuator_message = array ("button"=>"off","slider"=>515, "message"=>"test message 4");
 	echo nl2br("Sending messge ".http_build_query($actuator_message)."\n");
 	$response = $wotkit_client->sendActuator($private_unowned_sensor, $actuator_message);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
 	displayTestResults (null, false, $title, $test_status, $response);
 
 
@@ -2316,14 +2316,14 @@ printLabel($toc_keys[8], "[*****TESTING USERS******]");
 	$title = "\n\n [DELETE NON-EXISTENT user: '".$new_user_name."', as ADMIN] \n";
 	$response = $wotkit_client->deleteUser("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No user', 'No user');
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Query non-existent user
 	$title = "\n\n [QUERY NON-EXISTENT user: '".$new_user_name."', as ADMIN] \n";
 	$response = $wotkit_client->getUsers("admin", $new_user_name);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No user', 'No user');
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 
@@ -2498,16 +2498,17 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 	$title = "\n\n [QUERY SUBSCRIBED tags, with NO CREDENTIALS] \n";
 	$expected = 0;
 	$response = $wotkit_client->getTags("subscribed", null, null, null, null, null, null, $public);
-	$test_status = $wotkit_client->checkHTTPcode(401);
-	$problem = checkError($response["data"], "cannot use the subscribed scope");
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response["data"], "Invalid Sensor Query", "can only use scope:ALL");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query private, with no credentials
 	$title = "\n\n [QUERY tags for PRIVATE sensors, with NO CREDENTIALS] \n";
 	$expected = 0;
 	$response = $wotkit_client->getTags(null, "PRIVATE", null, null, null, null, null, $public);
-	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults(null, false, $title, $test_status, $response, $expected);
+	$test_status = $wotkit_client->checkHTTPcode(400);
+	$problem = checkError($response["data"], "Invalid Sensor Query", "used with visibility:PUBLIC");
+	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query location tags, with no credentials (no sensors)
 	$expected = 0;
@@ -2554,7 +2555,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query existing organization
-	$expected = 3;
+	$expected = 4;
 	$title = "\n\n [QUERY organization: '".$new_org_mandatory['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_mandatory['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -2565,7 +2566,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "[CREATE existing organization: '".$new_org_mandatory['name']."', as ADMIN]";
 	$response = $wotkit_client->createOrganization("admin", $new_org_mandatory);
 	$test_status = $wotkit_client->checkHTTPcode(409);
-	$problem = checkError($response["data"], "already exists", "already exists");
+	$problem = checkError($response["data"], "already exists", "already taken");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Create organization with invalid name
@@ -2600,7 +2601,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [UPDATE non-existent organization, as ADMIN] \n";
 	$response = $wotkit_client->updateOrganization("admin", 'not-real-org', $updated_org_all);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response["data"], "No organization", "No organization");
+	$problem = checkError($response["data"], "Could not locate this resource.");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Update existing organization NAME
@@ -2617,7 +2618,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization
-	$expected = 5;
+	$expected = 6;
 	$title = "\n\n [QUERY organization: '".$new_org_mandatory['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_mandatory['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -2631,7 +2632,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization
-	$expected = 5;
+	$expected = 6;
 	$title = "\n\n [QUERY organization: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -2646,7 +2647,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization
-	$expected = 5;
+	$expected = 6;
 	$title = "\n\n [QUERY organization: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
@@ -2714,7 +2715,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [CREATE sensor: '".$org_sensor_input_non_existent['name']."' with non-existent organzition: '".$org_sensor_input_non_existent['organization']."'] \n";
 	$response = $wotkit_client->createSensor($org_sensor_input_non_existent);
 	$test_status = $wotkit_client->checkHTTPcode(400);
-	$problem = checkError($response['data'], 'org_name is invalid');
+	$problem = checkError($response['data'], "The supplied object is invalid", "The objects's owner is not part of this organization.");
 	displayTestResults ($problem, false, $title, $test_status, $response);
 
 #Query all organizations
@@ -2741,9 +2742,9 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name']."']\n";
 	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'][0], $org_sensor_input);
+	$problem = checkArraysEqual($response['data'][1], $org_sensor_input);
 	if (!problem)
-		$problem = checkArraysEqual($response['data'][1], $org_sensor_input_public);
+		$problem = checkArraysEqual($response['data'][0], $org_sensor_input_public);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Query sensors by orgs
@@ -2751,9 +2752,9 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [QUERY sensors with ORGS='".$new_org_all['name'].",".$new_org_mandatory['name']."']\n";
 	$response = $wotkit_client->getSensors(null, null, null, null, null, null, null, null, null, $new_org_all['name'].", ".$new_org_mandatory['name']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response['data'][0], $org_sensor_input);
+	$problem = checkArraysEqual($response['data'][1], $org_sensor_input);
 	if (!problem)
-		$problem = checkArraysEqual($response['data'][1], $org_sensor_input_public);
+		$problem = checkArraysEqual($response['data'][0], $org_sensor_input_public);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Query sensors by org, with NO CREDENTIALS
@@ -2797,28 +2798,28 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 
 #Delete organization with memebers
 	$title = "\n\n [DELETE no member organization: '".$new_org_mandatory['name']."', as ADMIN] \n";
-	$response = $wotkit_client->deleteOrganization("admin", $new_org_mandatory['name']);
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_mandatory['name'], true);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Delete organization without members
 	$title = "\n\n [DELETE 1 member, 2 sensor organization: '".$new_org_all['name']."', as ADMIN] \n";
-	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name'], true);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Delete non-existent organization
 	$title = "\n\n [DELETE NON-EXISTENT organization: '".$new_org_all['name']."', as ADMIN] \n";
-	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name']);
+	$response = $wotkit_client->deleteOrganization("admin", $new_org_all['name'], true);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], "No organization", "No organization");
+	$problem = checkError($response['data'], "Could not locate this resource.");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query non-existent organization
 	$title = "\n\n [QUERY NON-EXISTENT organization: '".$new_org_all['name']."'] \n";
 	$response = $wotkit_client->getOrganizations(null, $new_org_all['name']);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], "No organization", "No organization");
+	$problem = checkError($response['data'], "Could not locate this resource");
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query sensor after its org is deleted
@@ -2861,7 +2862,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$title = "\n\n [QUERY deleted sensor: '".$org_sensor_input['name']."']\n";
 	$response = $wotkit_client->getSensors($org_sensor_input['name']);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], "No thing", "not in the database");
+	$problem = checkError($response['data'], "Could not locate this resource.");
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 
@@ -2888,14 +2889,14 @@ $public = true;
 #Query a single, PRIVATE sensor that does exist
 	$title = "\n\n [QUERY PRIVATE, existing sensor: '".$private_unowned_sensor."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensors($private_unowned_sensor, null, null, null, null, null, null, null, null, null, null, $public );
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query a single, public sensor that DOES NOT exist
 	$title = "\n\n [QUERY NOT-EXISTENT sensor: '".$invalid_sensor_input["name"]."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensors($invalid_sensor_input["name"], null, null, null, null, null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode(404);
-	$problem = checkError($response['data'], 'No thing');
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults($problem, false, $title, $test_status, $response);
 
 #Query sensor data from PUBLIC sensor
@@ -2908,7 +2909,8 @@ $public = true;
 #Query sensor data from PRIVATE sensor
 	$title = "\n\n [QUERY data from PRIVATE sensor: '".$existing_data_sensor_full[2]."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensorData($existing_data_sensor_full[2], $public);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults(null, false, $title, $test_status, $response, null);
 
 #Query raw data
@@ -2935,7 +2937,8 @@ $public = true;
 #Query sensor fields from PRIVATE sensors
 	$title = "\n\n [QUERY fields from PRIVATE sensor: '".$existing_data_sensor_full[2]."' (with NO CREDENTIALS)]\n";
 	$response = $wotkit_client->getSensorFields ($existing_data_sensor_full[2], null, $public);
-	$test_status = $wotkit_client->checkHTTPcode(401);
+	$test_status = $wotkit_client->checkHTTPcode(404);
+	$problem = checkError($response['data'], 'Could not locate this resource.');
 	displayTestResults(null, false, $title, $test_status, $response);
 
 #Query organization	WITHOUT CREDENTIALS
@@ -2946,7 +2949,7 @@ $public = true;
 	displayTestResults(null, false, $title, $test_status, $response, $expected, true);
 
 #Query organization	WITHOUT CREDENTIALS
-	$expected = 5;
+	$expected = 6;
 	$org = 'sensetecnic';
 	$title = "\n\n [QUERY organization: '".$org."' (with NO CREDENTIALS)] \n";
 	$response = $wotkit_client->getOrganizations(null, $org, null, null, null, $public);

@@ -178,7 +178,7 @@
 			}
 		}
 
-		// Format REsponse
+		// Format Response (rayh -- added this otherwise impossible to debug)
 		if ($problem == true) {
 				echo 'EXPECTED';
 				echo json_encode($desired);
