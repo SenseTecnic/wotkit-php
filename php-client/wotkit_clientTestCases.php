@@ -1746,6 +1746,15 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 		displayTestResults (null, false, $title, $test_status, $response);
 	}
 
+    //HACK: Sending extra 3 roles of data to $existing_data_sensor[0]
+    $test_databases_data = array(
+        array("timestamp" => 1357592400000, "value" => 10.0, "message" => "test message 1", "lng" => 30.0, "lat" => 20.0),
+        array("timestamp" => 1357596000000, "value" => 40.0, "message" => "test message 2", "lng" => 30.0, "lat" => 20.0),
+        array("timestamp" => 1357599600000, "value" => 70.0, "message" => "test message 3", "lng" => 90.0, "lat" => 80.0)
+    );
+
+    print_r($wotkit_client->updateSensorData($existing_data_sensor[0],$test_databases_data));
+
 #Querying all raw data
 	$title = "\n\n [Querying all from sensor: '".$existing_data_sensor[1]."'] \n";
 	$expected = 1;
