@@ -26,8 +26,11 @@ FILES:
 TESTING:
 
 1. Make sure the WoTKit database is initialized with the latest data fixtures.
-2. Set configuration parameters in "wotkit_clientConfig.php"
-3. Run "wotkit_ClientOauth2Testing.php" using Chrome or IE* to test with Oauth
+2. Check to make sure:
+    - user "tester" is initialized with key_id, key_password that matches with values in wotkit_client.php
+    - sensors: api-data-test-1, api-data-test-2, api-data-test-3 are owned by tester and contain no data
+3. Set configuration parameters in "wotkit_clientConfig.php"
+4. Run "wotkit_ClientOauth2Testing.php" using Chrome or IE* to test with Oauth
    Run "wotkit_clientTestCases.php" to test with keys
 
 Note: Any RED, open tests have failed. Any BLUE tests need to visually checked.
