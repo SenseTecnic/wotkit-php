@@ -1,5 +1,7 @@
 <?php
 
+require_once('wotkit_clientConfig.php');
+
 class wotkit_client {
 
 	//A set key in database with "tester" as owner
@@ -10,15 +12,18 @@ class wotkit_client {
 	private $admin_key_id = "9ae8fee004d7385c";
 	private $admin_key_password = "27cb43c11491929b";
 
+	private $tester_alt_username = "tester-alt";
+	private $tester_alt_password = "fFbjfpDEdyw9e3fkAFxH";
+
 	//Necessary for Oauth2
 	private $client_id;
 	private $client_secret;
 	private $accessToken = 'none';
 	private $oauthTokenURL = "oauth/token";
-	private $redirectURL = "http://localhost/wotkit_clientTestCases.php";
+	private $redirectURL = REDIRECT_URL;
 	private $hasParameters;
 
-	private $base_url = "http://wotkit.sensetecnic.com/api/";
+	private $base_url = BASE_URL;
 
 	public $response;
 	public $response_info;
@@ -89,12 +94,12 @@ class wotkit_client {
 		if( $expected_http_code == NULL )
 			$expected_http_code = $this->expected_http_code;
 
-		if ( $this->response_info[http_code] == $expected_http_code )
+		if ( $this->response_info['http_code'] == $expected_http_code )
 			$response ='<b>PASS</b> ';
 		else
 			$response = '<font color="red">FAIL</font> ';
 
-		$response .=" - HTTP ".$this->response_info[http_code];
+		$response .=" - HTTP ".$this->response_info['http_code'];
 
 		if ( $message != NULL )
 			$response.=" ".$message;
@@ -192,9 +197,13 @@ class wotkit_client {
 		$url_string = "sensors";
 
 		if ($sensor == NULL){
-			$params = array("scope" => $scope, "active" => $active, "visibility" => $visibility,
-							"tags" => $tags, "text" => $text, "offset" => $offset, "limit" => $limit,
-							"location" => $this->NWSELocationBox($location), "orgs" => $orgs,
+			$params = array("scope" => $scope, "active" => $active, 
+							"visibility" => $visibility,
+							"tags" => $tags, "text" => $text, 
+							"offset" => $offset, 
+							"limit" => $limit,
+							"location" => $this->NWSELocationBox($location), 
+							"owners" => $orgs,
 							"metadata"=>$this->formatMetadata($metadata) );
 			//$param_string = $this->ArraytoNameValuePairs($params);
 			$param_string = http_build_query($params);
@@ -387,17 +396,24 @@ class wotkit_client {
 
 	/* getSensorData()
 	 * public = true  => do not supply any credentials
+	 * start and before are in seconds
 	 */
-	public function getSensorData ($sensor, $public=false){
+	public function getSensorData ($sensor, $public=false, $start="", $before=""){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
 
-		$response = $this->processRequest( "sensors/".$sensor."/data", "GET", null, 1, $public);
+		$request_url = "sensors/".$sensor."/data";
+
+		if ($start != "" && $before != "") {
+			$request_url .= "?start=".($start*1000)."&before=".($before*1000);
+		}
+
+		$response = $this->processRequest($request_url, "GET", null, 1, $public);
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
 
-	public function sendSensorData ($sensor, $value ,$lat=NULL, $lng=NULL, $message=NULL, $timestamp=NULL){
+	public function sendSensorData ($sensor, $value ,$lat=NULL, $lng=NULL, $message=NULL, $timestamp=NULL, $public=false){
 		$this->expected_http_code = 201;
 		$this->hasParameters = false;
 
@@ -453,7 +469,7 @@ class wotkit_client {
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 
-		$response = $this->processRequest( "sensors/".$sensor."/data/".$timestamp, "DELETE");
+		$response = $this->processRequest( "sensors/".$sensor."/data/".$timestamp, "DELETE", $special_user="ADMIN");
 		$response['data'] = json_decode($response['data'], true);
 		return $response;
 	}
@@ -506,8 +522,8 @@ class wotkit_client {
 		if( $tq != NULL )
 			$url_string .= "tq=".rawurlencode ($tq);
 
-		if ( substr($str, -1) == '?' ){
-			$url_string=substr_replace($string ,"",-1);
+		if ( substr($url_string, -1) == '?' ){
+			$url_string=substr_replace($url_string ,"",-1);
 			$this->hasParameters = false;
 		}
 
@@ -583,87 +599,97 @@ class wotkit_client {
 //**must have ROLE_ADMIN credentials to use these functions (expect getOrganizations)
 //*** special_user = "admin" => supply KEY for admin user
 
-		/* getOrganizations()
-		 * public = true  => do not supply any credentials
-		 */
-		public function getOrganizations($special_user=null, $org_name=null, $text=null, $offset=null, $limit=NULL, $public=false){
-			$this->expected_http_code = 200;
-			$url_string = "orgs";
+	/* getOrganizations()
+	 * public = true  => do not supply any credentials
+	 */
+	public function getOrganizations($special_user=null, $org_name=null, $text=null, $offset=null, $limit=NULL, $public=false){
+		$this->expected_http_code = 200;
+		$url_string = "orgs";
 
-			if (empty($org_name)){
-				$params = array("text"=>$text, "offset"=>$offset, "limit"=>$limit);
-				//$param_string = $this->ArraytoNameValuePairs($params);
-				$param_string = http_build_query($params);
-				if (empty($param_string))
-					$this->hasParameters = false;
-				else{
-					$url_string .= "?".$param_string;
-					$this->hasParameters = true;
-				}
-			}else{
-				$url_string .= "/".$org_name;
+		if (empty($org_name)){
+			$params = array("text"=>$text, "offset"=>$offset, "limit"=>$limit);
+			//$param_string = $this->ArraytoNameValuePairs($params);
+			$param_string = http_build_query($params);
+			if (empty($param_string))
 				$this->hasParameters = false;
+			else{
+				$url_string .= "?".$param_string;
+				$this->hasParameters = true;
 			}
-
-			$response = $this->processRequest ($url_string, "GET", null, 1, $public, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
+		}else{
+			$url_string .= "/".$org_name;
+			$this->hasParameters = false;
 		}
 
-		public function createOrganization($special_user=null, $new_org){
-			$this->expected_http_code = 201;
+		$response = $this->processRequest ($url_string, "GET", null, 1, $public, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			//$new_org_data = $this->ArraytoJSON($new_org);
-			$new_org_data = json_encode($new_org);
-			$response = $this->processRequest ("orgs", "POST", $new_org_data, 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+	public function createOrganization($special_user=null, $new_org){
+		$this->expected_http_code = 201;
 
-		public function updateOrganization($special_user=null, $org_name, $updated_org){
-			$this->expected_http_code = 204;
+		//$new_org_data = $this->ArraytoJSON($new_org);
+		$new_org_data = json_encode($new_org);
+		$response = $this->processRequest ("orgs", "POST", $new_org_data, 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			//$updated_org_data = $this->ArraytoJSON($updated_org);
-			$updated_org_data = json_encode($updated_org);
-			$response = $this->processRequest ("orgs/".$org_name, "PUT", $updated_org_data, 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+	public function updateOrganization($special_user=null, $org_name, $updated_org){
+		$this->expected_http_code = 204;
 
-		public function deleteOrganization($special_user=null, $org_name, $hardDelete=false){
-			$this->expected_http_code = 204;
+		//$updated_org_data = $this->ArraytoJSON($updated_org);
+		$updated_org_data = json_encode($updated_org);
+		$response = $this->processRequest ("orgs/".$org_name, "PUT", $updated_org_data, 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			$qArray = Array("hardDelete" => $hardDelete);
-			$qParams = http_build_query($qArray);
+	public function deleteOrganization($special_user=null, $org_name, $hardDelete=false){
+		$this->expected_http_code = 204;
 
-			$response = $this->processRequest ("orgs/".$org_name."?".$qParams, "DELETE", null, 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+		$qArray = Array("hardDelete" => $hardDelete);
+		$qParams = http_build_query($qArray);
 
-		public function getOrganizationMembers($special_user=null, $org_name){
-			$this->expected_http_code = 200;
+		$response = $this->processRequest ("orgs/".$org_name."?".$qParams, "DELETE", null, 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			$response = $this->processRequest ("orgs/".$org_name."/members", "GET", null, 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+	public function getOrganizationMembers($special_user=null, $org_name){
+		$this->expected_http_code = 200;
 
-		public function addOrganizationMembers($special_user=null, $org_name, $member_array){
-			$this->expected_http_code = 204;
+		$response = $this->processRequest ("orgs/".$org_name."/members", "GET", null, 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			$response = $this->processRequest ("orgs/".$org_name."/members", "POST", json_encode($member_array), 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+	public function addOrganizationMembers($special_user=null, $org_name, $member_array){
+		$this->expected_http_code = 204;
 
-		public function removeOrganizationMembers($special_user=null, $org_name, $member_array){
-			$this->expected_http_code = 204;
+		$response = $this->processRequest ("orgs/".$org_name."/members", "POST", json_encode($member_array), 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
-			$response = $this->processRequest ("orgs/".$org_name."/members", "DELETE", json_encode($member_array), 1, false, $special_user);
-			$response['data'] = json_decode($response['data'], true);
-			return $response;
-		}
+	public function removeOrganizationMembers($special_user=null, $org_name, $member_array){
+		$this->expected_http_code = 204;
+
+		$response = $this->processRequest ("orgs/".$org_name."/members", "DELETE", json_encode($member_array), 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
+
+	public function updateOrganizationMemberRole($special_user=null, $org_name, $username, $role) {
+		$this->expected_http_code = 204;
+
+		$member = array("username" => $username ,"role" => $role);
+
+		$response = $this->processRequest ("orgs/".$org_name."/members/".$username, "PUT", json_encode($member), 1, false, $special_user);
+		$response['data'] = json_decode($response['data'], true);
+		return $response;
+	}
 
 //News
 //**does not require any credentials
@@ -762,15 +788,16 @@ class wotkit_client {
 
 			}
 		} else{
-			if (empty($special_user))
+			if (empty($special_user)) {
 				$permission = "Public, no authentication.";
-
-			if ($special_user == "other"){
-				curl_setopt($ch, CURLOPT_USERPWD,"sensetecnic:aMUSEment2");
-				$permission = "Loggged in as user: 'sensetecnic'.";
 			}
 
-			if ($special_user == "admin"){
+			if ($special_user == "other") {
+				curl_setopt($ch, CURLOPT_USERPWD, "{$this->tester_alt_username}:{$this->tester_alt_password}");
+				$permission = "Loggged in as user: 'tester_alt'.";
+			}
+
+			if ($special_user == "admin") {
 				curl_setopt($ch, CURLOPT_USERPWD,"{$this->admin_key_id}:{$this->admin_key_password}");
 				$permission = "Using key for user: 'tester-admin'.";
 			}
@@ -815,101 +842,12 @@ class wotkit_client {
 						"headers" => $this,
 						"body"    => $data
 					),
-				"code"=>$this->response_info[http_code],
+				"code"=>$this->response_info['http_code'],
 				"data"=>$this->response
 			);
 
 		return $response;
 	}
-
-/*
- *Private Helper Functions
- */
-	// private function ArraytoNameValuePairs($params){
-
-		// $started = false;
-		// $url_string="";
-
-		// foreach( array_keys($params) as $key){
-
-			// if ( $params[$key] != NULL){
-				// if ( $started == false){
-					// $started= true;
-				// }
-				// else{
-					// $url_string .= "&";
-				// }
-				// $url_string.= $key."=".$params[$key];
-			// }
-		// }
-
-		// return $url_string;
-	// }
-
-	// private function ArraytoJSONList($multi_dim_array){
-		// $started = false;
-		// $sensor_input = "[";
-
-		// foreach ($multi_dim_array as $data_array){
-			// if ( $started == false){
-				// $started = true;
-			// }
-			// else{
-				// $sensor_input.= ',';
-			// };
-			// $sensor_input .= $this->ArraytoJSON($data_array);
-		// };
-		// $sensor_input.= ']';
-
-		// return $sensor_input;
-	// }
-
-	// private function ArraytoJSON($data_array){
-
-		// $started = false;
-		// $contains_tags = false;
-		// $sensor_input = "{";
-
-		// foreach( array_keys($data_array) as $key){
-			// if ( $started == false){
-				// $started = true;
-			// }
-			// else{
-				// $sensor_input.= ',';
-			// };
-
-			// if ($key == "tags"){
-				// $contains_tags = true;
-			// }else{
-				// if(is_numeric($data_array[$key])==true){
-					// $sensor_input .='"'.$key.='":'.$data_array[$key];
-				// }
-				// else{
-					// $sensor_input .='"'.$key.='":"'.$data_array[$key].'"';
-				// };
-			// };
-
-		// }
-
-		// if ($contains_tags == true){
-			// $started = false;
-			// $sensor_input.= '"tags":[';
-			// foreach( $data_array[tags] as $tag ){
-
-					// if ( $started == false){
-						// $started = true;
-					// }
-					// else{
-						// $sensor_input.= ',';
-					// };
-						// $sensor_input.= '"'.$tag.'"';
-			// }
-			// $sensor_input.= ']';
-		// }
-		// $sensor_input.= "}";
-
-		// return $sensor_input;
-	// }
 
 	private function NWSELocationBox ($location){
 		if( $location == NULL )
