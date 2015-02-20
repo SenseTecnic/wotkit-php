@@ -540,27 +540,27 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Create new field to 'api-client-test-sensor'
-		$title = "\n\n [CREATE new field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
+		$title = "\n\n [CREATE new field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $new_field);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
 	#Query single "testfield" field for 'api-client-test-sensor'
-		$title =  "\n\n [QUERY single field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field[name]);
+		$title =  "\n\n [QUERY single field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkArraysEqual($response['data'], $new_field);
 		displayTestResults ($problem, false, $title, $test_status, $response);
 
 	#Update "testfield" field for 'api-client-test-sensor'
-		$title = "\n\n [UPDATE existing field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
+		$title = "\n\n [UPDATE existing field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $updated_field);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
 	#Query single "testfield" field for 'api-client-test-sensor'
-		$title = "\n\n [QUERY single field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field[name]);
+		$title = "\n\n [QUERY single field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkArraysEqual($response['data'], $updated_field);
 		displayTestResults ($problem, false, $title, $test_status, $response);
@@ -587,8 +587,8 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		displayTestResults (null, true, $title, $test_status, $response, $expected, true);
 
 	#Query single "testfield" field for 'api-client-test-sensor'
-		$title = "\n\n [QUERY single custom field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field[name]);
+		$title = "\n\n [QUERY single custom field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
@@ -606,8 +606,8 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		displayTestResults (null, true, $title, $test_status, $response, $expected, true);
 
 	#Delete "testfield" field for 'api-client-test-sensor'
-		$title = "\n\n [DELETE single field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->deleteSensorField ($generic_sensor, $new_field[name]);
+		$title = "\n\n [DELETE single field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->deleteSensorField ($generic_sensor, $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
@@ -620,8 +620,8 @@ printLabel($toc_keys[0],"[*****TESTING SENSORS******]");
 		displayTestResults ($problem, true, $title, $test_status, $response, $expected, true);
 
 	#Query deleted "testfield" field for 'api-client-test-sensor'
-		$title = "\n\n [QUERY deleted field '".$new_field[name]."' for sensor: '".$generic_sensor."']\n";
-		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field[name]);
+		$title = "\n\n [QUERY deleted field '".$new_field['name']."' for sensor: '".$generic_sensor."']\n";
+		$response = $wotkit_client->getSensorFields ($generic_sensor, $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode(400);
 		displayTestResults (null, false, $title, $test_status, $response);
 
@@ -1295,13 +1295,13 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 		displayTestResults (null, false, $title, $test_status, $response);
 
 	#Create new field for 'api-client-test-sensor'
-		$title = "\n\n [CREATE numeric, non-required field '".$num_field[name]."' for sensor: '".$generic_sensor."']\n";
+		$title = "\n\n [CREATE numeric, non-required field '".$num_field['name']."' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $num_field);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
 	#Create new field for 'api-client-test-sensor'
-		$title = "\n\n [CREATE string, non-required field '".$string_field[name]."' for sensor: '".$generic_sensor."']\n";
+		$title = "\n\n [CREATE string, non-required field '".$string_field['name']."' for sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->updateSensorField ($generic_sensor, $string_field);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response, null, true);
@@ -1309,7 +1309,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	#Post Name/Value pair valid data
 		$data_array = array( "value" => 1, "lat" => 2, "lng" => 2,
 							"message" => "test message",
-							$num_field[name]=>9, $string_field[name]=>"hello name/value string!");
+							$num_field['name']=>9, $string_field['name']=>"hello name/value string!");
 		$title = "\n\n [POST Name/Value pair valid data to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array);
 		$test_status = $wotkit_client->checkHTTPcode();
@@ -1325,7 +1325,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	#Post JSON valid data
 		$data_array = array( "value" => 1, "lat" => 2, "lng" => 2,
 							"message" => "test message",
-							$num_field[name]=>99, $string_field[name]=>"hello JSON string!");
+							$num_field['name']=>99, $string_field['name']=>"hello JSON string!");
 		$title = "\n\n [POST JSON valid data to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array, true);
 		$test_status = $wotkit_client->checkHTTPcode();
@@ -1341,7 +1341,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	#Post Name/Value pair invalid data
 		$data_array = array( "value" => 5, "lat" => 6, "lng" => 7,
 							"message" => "test message with test field",
-							$num_field[name]=>"hello", $string_field[name]=>9);
+							$num_field['name']=>"hello", $string_field['name']=>9);
 		$title = "\n\n [POST Name/Value pair invalid data -string to numerical field- to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array);
 		$test_status = $wotkit_client->checkHTTPcode(400);
@@ -1370,7 +1370,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	#Post Name/Value pair undeclared data
 		$data_array = array( "value" => 5, "lat" => 6, "lng" => 7,
 							"message" => "test message with test field",
-							$num_field[name]=>9, $string_field[name]=>"hello",
+							$num_field['name']=>9, $string_field['name']=>"hello",
 							"madeupNUMfield"=>9, "madeupSTRINGfield"=>"hi name/value!");
 		$title = "\n\n [POST Name/Value pair undeclared data to sensor: '".$generic_sensor."']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array);
@@ -1387,7 +1387,7 @@ printLabel($toc_keys[2], "[*****TESTING SENSOR DATA******]");
 	#Post JSON undeclared data
 		$data_array = array( "value" => 5, "lat" => 6, "lng" => 7,
 							"message" => "test message with test field",
-							$num_field[name]=>9, $string_field[name]=>"hello",
+							$num_field['name']=>9, $string_field['name']=>"hello",
 							"madeupNUMfield"=>99, "madeupSTRINGfield"=>"hi JSON!");
 		$title = "\n\n [POST JSON undeclared data to sensor: '".$generic_sensor." -- numerical field should be recognized']\n";
 		$response = $wotkit_client->sendNonStandardSensorData($generic_sensor, $data_array, true);
@@ -1639,7 +1639,7 @@ date_default_timezone_set($old_timezone);
 		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 	#Create new field to 'api-data-test-3'
-		$title = "\n\n [CREATE new field '".$new_field[name]."' from sensor: '".$existing_data_sensor[2]."']\n";
+		$title = "\n\n [CREATE new field '".$new_field['name']."' from sensor: '".$existing_data_sensor[2]."']\n";
 		$response = $wotkit_client->updateSensorField ($existing_data_sensor[2], $new_field);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
@@ -1649,12 +1649,12 @@ date_default_timezone_set($old_timezone);
 		$expected = 5;
 		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2]);
 		$test_status = $wotkit_client->checkHTTPcode();
-		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message', $new_field[name]));
+		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message', $new_field['name']));
 		displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 	#Query single "testfield" field for 'api-data-test-3'
-		$title = "\n\n [QUERY single field '".$new_field[name]."' from sensor: '".$existing_data_sensor[2]."']\n";
-		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2], $new_field[name]);
+		$title = "\n\n [QUERY single field '".$new_field['name']."' from sensor: '".$existing_data_sensor[2]."']\n";
+		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2], $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		$problem = checkArraysEqual($response['data'], $new_field);
 		displayTestResults ($problem, false, $title, $test_status, $response);
@@ -1675,8 +1675,8 @@ date_default_timezone_set($old_timezone);
 		displayTestResults ($problem, true, $title, $test_status, $response, $expected, true);
 
 	#Query single "testfield" field for 'api-data-test-3'
-		$title = "\n\n [QUERY single field '".$new_field[name]."' from sensor: '".$existing_data_sensor[2]."']\n";
-		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2], $new_field[name]);
+		$title = "\n\n [QUERY single field '".$new_field['name']."' from sensor: '".$existing_data_sensor[2]."']\n";
+		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2], $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
@@ -1685,12 +1685,12 @@ date_default_timezone_set($old_timezone);
 		$expected = 5;
 		$response = $wotkit_client->getSensorFields ($existing_data_sensor[2]);
 		$test_status = $wotkit_client->checkHTTPcode();
-		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message', $new_field[name]));
+		$problem = checkTagsOrSensors($response['data'], array('value', 'lat', 'lng', 'message', $new_field['name']));
 		displayTestResults ($problem, true, $title, $test_status, $response, $expected, true);
 
 	#Delete "testfield" field for 'api-data-test-3'
-		$title = "\n\n [DELETE single field '".$new_field[name]."' from sensor: '".$existing_data_sensor[2]."']\n";
-		$response = $wotkit_client->deleteSensorField ($existing_data_sensor[2], $new_field[name]);
+		$title = "\n\n [DELETE single field '".$new_field['name']."' from sensor: '".$existing_data_sensor[2]."']\n";
+		$response = $wotkit_client->deleteSensorField ($existing_data_sensor[2], $new_field['name']);
 		$test_status = $wotkit_client->checkHTTPcode();
 		displayTestResults (null, false, $title, $test_status, $response);
 
@@ -1810,7 +1810,7 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, $end_time);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data BEFORE
@@ -1818,9 +1818,9 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	$expected = 2;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, NULL, NULL, 1.5*3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[0]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[0]);
 	if (!$problem)
-		$problem = checkArraysEqual($response[data][1], $saved_data[1]);
+		$problem = checkArraysEqual($response['data'][1], $saved_data[1]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data AFTER
@@ -1828,7 +1828,7 @@ printLabel($toc_keys[3], "[*****TESTING RAW SENSOR DATA RETRIEVAL******]");
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, 3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data BEFOREE
@@ -1999,7 +1999,6 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 #Querying OFFSET
 	$title = "\n\n [Query OFFSET=35] \n";
 	$offset = 35;
-	$expected = $total_sensors - $offset;
 	$response = $wotkit_client->getSensors(null, NULL, NULL, NULL, NULL, NULL, $offset) ;
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults (null, false, $title, $test_status, $response, null);
@@ -2101,7 +2100,7 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, $end_time);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data BEFORE
@@ -2109,9 +2108,9 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	$expected = 2;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, NULL, NULL, 1.5*3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[0]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[0]);
 	if (!$problem)
-		$problem = checkArraysEqual($response[data][1], $saved_data[1]);
+		$problem = checkArraysEqual($response['data'][1], $saved_data[1]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data AFTER
@@ -2119,7 +2118,7 @@ printLabel($toc_keys[5], "[*****TESTING QUERYING SENSORS******]");
 	$expected = 1;
 	$response = $wotkit_client->getRawSensorData($existing_data_sensor[0], $start_time, NULL, 3600000);
 	$test_status = $wotkit_client->checkHTTPcode();
-	$problem = checkArraysEqual($response[data][0], $saved_data[2]);
+	$problem = checkArraysEqual($response['data'][0], $saved_data[2]);
 	displayTestResults ($problem, false, $title, $test_status, $response, $expected, true);
 
 #Querying raw data BEFOREE
@@ -2510,14 +2509,13 @@ printLabel($toc_keys[11], "[*****TESTING TAGS******]");
 
 #Query all, with no credentials
 	$title = "\n\n [QUERY ALL tags, with NO CREDENTIALS] \n";
-	$expected = $public_tags;
 	$response = $wotkit_client->getTags("all", null, null, null, null, null, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
-	displayTestResults(null, false, $title, $test_status, $response, $expected);
+	displayTestResults(null, false, $title, $test_status, $response, null);
 
 #Query all, limit 2, with no credentials
-	$title = "\n\n [QUERY ALL tags, with LIMIT=".$limit.", with NO CREDENTIALS] \n";
 	$limit = 2;
+	$title = "\n\n [QUERY ALL tags, with LIMIT=".$limit.", with NO CREDENTIALS] \n";
 	$response = $wotkit_client->getTags("all", null, null, null, null, $limit, null, $public);
 	$test_status = $wotkit_client->checkHTTPcode();
 	displayTestResults(null, false, $title, $test_status, $response, $limit);
@@ -2536,7 +2534,7 @@ printLabel($toc_keys[12], "[*****TESTING ORGANIZATIONS******]");
 	$response = $wotkit_client->getOrganizations(null);
 	$organizations = count($response['data']);
 	$test_status = $wotkit_client->checkHTTPcode();
-	if ($organization == 1)
+	if ($organizations == 1)
 		$problem = checkTagsOrSensors(array($response['data'][0]), array('sensetecnic'));
 	else
 		$problem = null;

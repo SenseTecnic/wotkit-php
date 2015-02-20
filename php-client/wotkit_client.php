@@ -57,15 +57,14 @@ class wotkit_client {
 /*
  *Oauth2 Functions
  */
-	private function obtainAccessToken (){
-		$code = $_GET['code'];
+	private function obtainAccessToken (){		
 		$accessToken = "none";
 		//$ch = curl_init();
-		if(isset($code)) {
+		if(array_key_exists('code', $_GET)) {
 			// try to get an access token
 			$url = $this->oauthTokenURL;
 			$params = array(
-					 "code" => $code,
+					 "code" => $_GET['code'],
 					 "client_id" => $this->client_id ,
 					 "client_secret" => $this->client_secret,
 					 "redirect_uri" => $this->redirectURL,
@@ -306,7 +305,7 @@ class wotkit_client {
 	/* getSensorFields()
 	 * public = true  => do not supply any credentials
 	 */
-	public function getSensorFields ($sensor=null, $field=null, $public){
+	public function getSensorFields ($sensor=null, $field=null, $public=false){
 		$this->expected_http_code = 200;
 		$this->hasParameters = false;
 
@@ -341,7 +340,7 @@ class wotkit_client {
 		$this->expected_http_code = 204;
 		$this->hasParameters = false;
 
-		$field = $data_array[name];
+		$field = $data_array['name'];
 		//$updated_sensor_field = $this->ArraytoJSON($data_array);
 		$updated_sensor_field = json_encode($data_array);
 		$response = $this->processRequest( "sensors/".$sensor."/fields/".$field, "PUT", $updated_sensor_field);

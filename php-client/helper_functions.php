@@ -231,7 +231,8 @@ function checkError($error, $keyword, $developerKeyword=null) {
 	}
 
     // Check the developer message
-	if ( stristr($error['error']['developerMessage'][0], $developerKeyword) ){
+	if ( array_key_exists('developerMessage', $error['error'])
+			&& stristr($error['error']['developerMessage'][0], $developerKeyword) ){
 		$innerProblem = false;
 	}
 
